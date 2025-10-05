@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>快递员列表</title>
+    <link rel="stylesheet" type="text/css" href="../../css/reset.css"/>
+    <link rel="stylesheet" type="text/css" href="../../css/list.css"/>
+</head>
+<body>
+<div id="app">
+    <div class="header">
+        <span>快递员列表</span>
+        <a href="add.html" class="btn btn-success" style="float:right;margin-top:-5px;">添加快递员</a>
+    </div>
+
+    <!-- 搜索区域 -->
+    <div class="search-area">
+        <input type="text" id="searchInput" class="input" placeholder="输入姓名或手机号搜索...">
+        <span class="btn btn-info" id="searchBtn">搜索</span>
+        <span class="btn" id="resetBtn">重置</span>
+    </div>
+
+    <div class="content">
+        <!-- 加载状态 -->
+        <div id="loadingState">
+            <div class="loading-spinner"></div>
+            加载中...
+        </div>
+
+        <!-- 错误状态 -->
+        <div id="errorState">
+            <div class="error-icon">❌</div>
+            <div id="errorMessage">加载失败</div>
+            <button class="btn btn-primary" onclick="loadCourierList()" style="margin-top: 16px;">重新加载</button>
+        </div>
+
+        <!-- 数据表格 -->
+        <table class="tab tab-hover" id="courierTable" style="display: none;">
+            <thead>
+            <tr class="active">
+                <th>编号</th>
+                <th>姓名</th>
+                <th>手机号码</th>
+                <th>身份证</th>
+                <th>密码</th>
+                <th>派件数</th>
+                <th>注册时间</th>
+                <th>上次登陆时间</th>
+                <th>操作</th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- 数据动态加载 -->
+            </tbody>
+        </table>
+
+        <!-- 无数据提示 -->
+        <div id="noData" class="no-data" style="display: none;">
+            暂无快递员数据
+        </div>
+    </div>
+
+    <!-- 分页区域 -->
+    <div class="pagination" id="pagination" style="display: none;">
+        <span class="btn" id="prevBtn">上一页</span>
+        <span class="pagination-info" id="pageInfo">第 1 页</span>
+        <span class="btn" id="nextBtn">下一页</span>
+    </div>
+</div>
+
+<script src="/qrcode/jquery2.1.4.js"></script>
+<script src="/layer/layer.js"></script>
+<script>
+    // 全局变量
+    var currentPage = 1;
+    var pageSize = 10;
+    var totalCount = 0;
+    var searchKeyword = '';
+
+    // 页面加载完成后执行
+    $(function(){
+        console.log("页面加载完成，初始化数据...");
+
+        // 加载快递员列表
+        loadCourierList();
+
+        // 搜索按钮点击事件
+        $("#searchBtn").click(function(){
+            searchKeyword = $("#searchInput").val().trim();
+            currentPage = 1;
+            loadCourierList();
+        });
+
+        // 重置按钮点击事件
+        $("#resetBtn").click(function(){
+            $("#searchInput").val('');
+            searchKeyword = '';
+            currentPage = 1;
+            loadCourierList();
+        });
+
+        // 回车搜索
+        $("#searchInput").keypress(function(e){
+            if(e.which == 13) {
+                searchKeyword = $(this).val().trim();
+                currentPage = 1;
+                loadCourierList();
+            }
+        });
+
+        // 分页按钮事件
+        $("#prevBtn").click(function(){
+            if(currentPage > 1) {
+                currentPage--;
+                loadCourierList();
+            }
+        });
+
+        $("#nextBtn").click(function(){
+            if(currentPage * pageSize < totalCount) {
+                currentPage++;
+                loadCourierList();
+            }
+        });
+
+        console.log("所有事件绑定完成");
+    });
+
+    // 加载快递员列表
+    function loadCourierList() {
+        console.log("加载快递员列表，页码:", currentPage, "搜索关键词:", searchKeyword);
+
+        // 显示加载状态
+        showLoadingState();
+
+        var offset = (currentPage - 1) * pageSize;
+
+        $.ajax({
+            url: "/courier/list.do",
+            type: "GET",
+            data: {
+                offset: offset,
+                pageNumber: pageSize
+            },
+            dataType: "json",
+            success: function(data) {
+                console.log("列表数据加载成功:", data);
+                hideLoadingState();
+
+                if(data.status == 0 && data.data) {
+                    displayCourierList(data.data);
+                    totalCount = data.total || data.data.length;
+                    updatePagination();
+                } else {
+                    showNoData(data.result || "暂无数据");
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("加载列表失败:", status, error);
+                showErrorState("加载失败: " + error);
+            }
+        });
+    }
+
+    // 显示加载状态
+    function showLoadingState() {
+        $("#loadingState").show();
+        $("#courierTable").hide();
+        $("#noData").hide();
+        $("#errorState").hide();
+        $("#pagination").hide();
+    }
+
+    // 隐藏加载状态
+    function hideLoadingState() {
+        $("#loadingState").hide();
+    }
+
+    // 显示错误状态
+    function showErrorState(message) {
+        $("#errorMessage").text(message);
+        $("#errorState").show();
+        $("#courierTable").hide();
+        $("#noData").hide();
+        $("#pagination").hide();
+    }
+
+    // 显示无数据
+    function showNoData(message) {
+        $("#noData").text(message || "暂无数据");
+        $("#noData").show();
+        $("#courierTable").hide();
+        $("#pagination").hide();
+    }
+
+    // 显示数据表格
+    function displayCourierList(data) {
+        var tbody = $('#courierTable tbody');
+        tbody.empty();
+
+        $.each(data, function(index, item){
+            // 格式化时间
+            var registerTime = formatDateTime(item.registerTime);
+            var lastLoginTime = formatDateTime(item.lastLoginTime);
+
+            var row = '<tr>' +
+                '<td>' + (item.id || '') + '</td>' +
+                '<td>' + (item.name || '') + '</td>' +
+                '<td>' + (item.phone || '') + '</td>' +
+                '<td>' + (item.idCard ? '******' : '') + '</td>' +
+                '<td>' + (item.password ? '******' : '') + '</td>' +
+                '<td>' + (item.deliveryCount || 0) + '</td>' +
+                '<td>' + registerTime + '</td>' +
+                '<td>' + lastLoginTime + '</td>' +
+                '<td class="actions">' +
+                '<span class="btn btn-primary" onclick="editCourier(' + item.id + ')">修改</span>' +
+                // 删除按钮已移除
+                '</td>' +
+                '</tr>';
+            tbody.append(row);
+        });
+
+        $("#courierTable").show();
+        $("#noData").hide();
+    }
+
+    // 更新分页信息
+    function updatePagination() {
+        var totalPages = Math.ceil(totalCount / pageSize);
+        $("#pageInfo").text("第 " + currentPage + " 页 / 共 " + totalPages + " 页 (" + totalCount + " 条记录)");
+
+        // 更新分页按钮状态
+        $("#prevBtn").prop('disabled', currentPage <= 1);
+        $("#nextBtn").prop('disabled', currentPage >= totalPages);
+
+        $("#pagination").show();
+    }
+
+    // 修改快递员
+    function editCourier(id) {
+        console.log("跳转到修改页面，ID:", id);
+        window.location.href = 'update.html?id=' + id;
+    }
+
+    // 格式化日期时间
+    function formatDateTime(dateTimeStr) {
+        if (!dateTimeStr || dateTimeStr === '无') {
+            return '无';
+        }
+
+        try {
+            var date = new Date(dateTimeStr);
+            if (isNaN(date.getTime())) {
+                return dateTimeStr;
+            }
+
+            var year = date.getFullYear();
+            var month = (date.getMonth() + 1).toString().padStart(2, '0');
+            var day = date.getDate().toString().padStart(2, '0');
+            var hours = date.getHours().toString().padStart(2, '0');
+            var minutes = date.getMinutes().toString().padStart(2, '0');
+            var seconds = date.getSeconds().toString().padStart(2, '0');
+
+            return year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
+        } catch (e) {
+            console.error("日期格式化错误:", e);
+            return dateTimeStr;
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>删除快递员</title>
+    <link rel="stylesheet" type="text/css" href="../../css/reset.css"/>
+    <link rel="stylesheet" type="text/css" href="../../css/add.css"/>
+</head>
+<body>
+<div id="app">
+    <div class="header">
+        <span>删除快递员信息</span>
+    </div>
+    <div class="content">
+        <table>
+            <tr>
+                <td class="text-right">手机号码</td>
+                <td class="content_right">
+                    <input type="text" id="phone" class="input inline-input" placeholder="请输入手机号码">
+                    <span class="btn btn-info" id="find">立即查找</span>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="header">
+        <span>查找信息如下</span>
+    </div>
+    <div class="content">
+        <table>
+            <tr>
+                <td class="text-right">编号</td>
+                <td class="content_right" id="showId">-</td>
+            </tr>
+            <tr>
+                <td class="text-right">姓名</td>
+                <td class="content_right" id="showName">-</td>
+            </tr>
+            <tr>
+                <td class="text-right">手机号码</td>
+                <td class="content_right" id="showPhone">-</td>
+            </tr>
+            <tr>
+                <td class="text-right">身份证</td>
+                <td class="content_right" id="showIdCard">******</td>
+            </tr>
+            <tr>
+                <td class="text-right">派件数</td>
+                <td class="content_right" id="showDeliveryCount">-</td>
+            </tr>
+            <tr>
+                <td class="text-right">注册时间</td>
+                <td class="content_right" id="showRegisterTime">-</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td class="content_right">
+                    <a href="list.html" class="btn btn-primary">返回列表</a>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div class="danger-zone" style="
+    background: linear-gradient(135deg, #fff5f5 0%, #ffeaea 100%);
+    border: 2px solid #f56565;
+    border-radius: 12px;
+    margin: 25px 0;
+    padding: 25px;
+    box-shadow: 0 4px 12px rgba(245, 101, 101, 0.15);
+">
+    <div style="
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #fed7d7;
+    ">
+        <div style="
+            background: #f56565;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-weight: bold;
+        ">
+            ⚠️
+        </div>
+        <h3 style="
+            margin: 0;
+            color: #c53030;
+            font-size: 18px;
+            font-weight: 600;
+        ">
+            危险操作区域
+        </h3>
+    </div>
+
+    <p style="
+        color: #744210;
+        margin-bottom: 20px;
+        line-height: 1.5;
+        font-size: 14px;
+    ">
+        <strong>警告：</strong>此操作将永久删除快递员数据，删除后无法恢复。请谨慎操作！
+    </p>
+
+    <div style="
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+    ">
+        <button onclick="manualTest()" style="
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(245, 101, 101, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(245, 101, 101, 0.4)';"
+                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(245, 101, 101, 0.3)';">
+            🗑️ 确认删除
+        </button>
+
+        <button onclick="checkVariables()" style="
+            background: #edf2f7;
+            color: #4a5568;
+            border: 1px solid #cbd5e0;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        " onmouseover="this.style.background='#e2e8f0';"
+                onmouseout="this.style.background='#edf2f7';">
+            🔍 检查信息
+        </button>
+    </div>
+
+    <div id="debugInfo" style="
+        margin-top: 20px;
+        padding: 16px;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #fed7d7;
+        font-size: 13px;
+        line-height: 1.4;
+        display: none;
+    ">
+        <strong style="color: #744210;">操作状态：</strong>
+        <span id="debugContent" style="margin-left: 8px;"></span>
+    </div>
+</div>
+
+<script src="/qrcode/jquery2.1.4.js"></script>
+<script src="/layer/layer.js"></script>
+<script>
+    $(".header:eq(1),.content:eq(1)").hide();
+    var currentCourierId = null;
+
+    // 手动测试函数
+    function manualTest() {
+        console.log("=== 手动删除开始 ===");
+        console.log("currentCourierId:", currentCourierId);
+
+        if (currentCourierId) {
+            console.log("发送删除请求...");
+            $.getJSON("/courier/delete.do", {id: currentCourierId}, function(data){
+                console.log("删除响应:", data);
+                alert("删除结果: " + JSON.stringify(data));
+            }).fail(function(xhr, status, error){
+                console.error("删除失败:", status, error);
+                alert("删除失败: " + status + ", " + error);
+            });
+        } else {
+            alert("请先查找快递员信息");
+        }
+    }
+
+    // 检查变量函数
+    function checkVariables() {
+        console.log("=== 变量检查 ===");
+        console.log("currentCourierId:", currentCourierId);
+        console.log("jQuery:", typeof $);
+        console.log("layer:", typeof layer);
+    }
+
+    $(function(){
+        console.log("DOM加载完成，绑定事件...");
+
+        $("#find").click(function(){
+            console.log("查找按钮被点击");
+            var windowId = layer.load();
+            var phone = $("#phone").val();
+            console.log("查找手机号:", phone);
+
+            $.getJSON("/courier/findByPhone.do", {phone: phone}, function(data){
+                layer.close(windowId);
+                console.log("查找响应:", data);
+                layer.msg(data.result);
+
+                if(data.status == 0 && data.data) {
+                    $(".header:eq(1),.content:eq(1)").fadeIn(1000);
+                    currentCourierId = data.data.id;
+                    console.log("设置 currentCourierId:", currentCourierId);
+
+                    $("#showId").text(data.data.id);
+                    $("#showName").text(data.data.name);
+                    $("#showPhone").text(data.data.phone);
+                    $("#showDeliveryCount").text(data.data.deliveryCount || 0);
+                    $("#showRegisterTime").text(data.data.registerTime || '无');
+                }
+            }).fail(function(xhr, status, error){
+                layer.close(windowId);
+                console.error("查找失败:", status, error);
+                layer.msg('查找失败，请重试');
+            });
+        });
+
+        // 修改删除按钮的事件绑定方式
+        $(document).on('click', '#deleteBtn', function(){
+            console.log("删除按钮被点击 - 通过事件委托");
+            if(!currentCourierId) {
+                console.log("currentCourierId 为空");
+                layer.msg('请先查找快递员信息');
+                return;
+            }
+
+            var name = $("#showName").text();
+            console.log("准备删除快递员，ID:", currentCourierId, "姓名:", name);
+
+            layer.confirm('确定要删除快递员：' + name + ' 吗？此操作不可恢复！', {
+                icon: 3,
+                title: '删除确认'
+            }, function(index){
+                console.log("用户确认删除");
+                layer.close(index);
+
+                var windowId = layer.load();
+                console.log("发送AJAX请求到 /courier/delete.do");
+
+                $.ajax({
+                    url: "/courier/delete.do",
+                    type: "GET",
+                    data: {id: currentCourierId},
+                    dataType: "json",
+                    success: function(data) {
+                        layer.close(windowId);
+                        console.log("删除成功响应:", data);
+                        layer.msg(data.result);
+
+                        if(data.status == 0) {
+                            setTimeout(function(){
+                                window.location.href = 'list.html';
+                            }, 1500);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        layer.close(windowId);
+                        console.error("删除请求失败:");
+                        console.error("状态:", status);
+                        console.error("错误:", error);
+                        console.error("响应文本:", xhr.responseText);
+                        layer.msg('删除失败: ' + error);
+                    }
+                });
+            });
+        });
+
+        console.log("事件绑定完成");
+    });
+</script>
+</body>
+</html>

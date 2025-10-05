@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>修改快递员</title>
+    <link rel="stylesheet" type="text/css" href="../../css/reset.css"/>
+    <link rel="stylesheet" type="text/css" href="../../css/add.css"/>
+</head>
+<body>
+<div id="app">
+    <div class="header">
+        <span>修改快递员信息</span>
+    </div>
+    <div class="content">
+        <form id="courierForm">
+            <input type="hidden" name="id" id="courierId">
+            <table>
+                <tr>
+                    <td class="text-right">姓名</td>
+                    <td class="content_right">
+                        <input type="text" name="name" id="name" class="input" placeholder="请输入姓名" required>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-right">手机号码</td>
+                    <td class="content_right">
+                        <input type="text" name="phone" id="phone" class="input" placeholder="请输入手机号码" required>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-right">身份证号</td>
+                    <td class="content_right">
+                        <input type="text" name="idCard" id="idCard" class="input" placeholder="请输入身份证号" required>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-right">密码</td>
+                    <td class="content_right">
+                        <input type="password" name="password" id="password" class="input" placeholder="请输入新密码（留空不修改）">
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-right">状态</td>
+                    <td class="content_right">
+                        <label><input type="radio" name="status" value="1" checked> 正常</label>
+                        <label><input type="radio" name="status" value="0"> 禁用</label>
+                    </td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td class="content_right">
+                        <button type="submit" class="btn btn-info">立即修改</button>
+                        <a href="list.html" class="btn btn-primary">返回列表</a>
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </div>
+</div>
+
+<script src="/qrcode/jquery2.1.4.js"></script>
+<script src="/layer/layer.js"></script>
+<script>
+    $(function(){
+        // 获取URL参数
+        function getUrlParam(name) {
+            var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+            var r = window.location.search.substr(1).match(reg);
+            if (r != null) return unescape(r[2]); return null;
+        }
+
+        var id = getUrlParam('id');
+        if(id) {
+            loadCourierInfo(id);
+        } else {
+            layer.msg('参数错误');
+            window.location.href = 'list.html';
+        }
+
+        $('#courierForm').submit(function(e){
+            e.preventDefault();
+
+            var windowId = layer.load();
+            var formData = $(this).serialize();
+
+            $.post('/courier/update.do', formData, function(data){
+                layer.close(windowId);
+
+                if(data.status == 0) {
+                    layer.msg(data.result, {icon: 1}, function(){
+                        window.location.href = 'list.html';
+                    });
+                } else {
+                    layer.msg(data.result, {icon: 2});
+                }
+            }).fail(function(){
+                layer.close(windowId);
+                layer.msg('修改失败，请重试', {icon: 2});
+            });
+        });
+    });
+
+    function loadCourierInfo(id) {
+        var windowId = layer.load();
+
+        $.getJSON('/courier/find.do', {id: id}, function(data){
+            layer.close(windowId);
+
+            if(data.status == 0 && data.data) {
+                var courier = data.data;
+                $('#courierId').val(courier.id);
+                $('#name').val(courier.name);
+                $('#phone').val(courier.phone);
+                $('#idCard').val(courier.idCard);
+                $('input[name="status"][value="' + (courier.status || 1) + '"]').prop('checked', true);
+            } else {
+                layer.msg('加载数据失败');
+                window.location.href = 'list.html';
+            }
+        }).fail(function(){
+            layer.close(windowId);
+            layer.msg('加载数据失败');
+            window.location.href = 'list.html';
+        });
+    }
+</script>
+</body>
+</html>

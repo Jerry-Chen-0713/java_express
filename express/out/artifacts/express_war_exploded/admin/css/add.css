@@ -1,0 +1,305 @@
+/* add.css - 用于添加、修改、删除页面的样式 */
+body {
+    background: #f5f6f7;
+    padding: 20px;
+    font-size: 14px;
+    min-height: 100vh;
+}
+
+#app {
+    background: #FFFFFF;
+    box-shadow: 0px 0px 2px 2px #eee;
+    border-radius: 3px;
+    min-height: 500px;
+}
+
+.layui-layer-content {
+    color: #fff9ec;
+}
+
+.header {
+    height: 50px;
+    line-height: 50px;
+    border-bottom: 1px solid #eee;
+    padding: 0 20px;
+    font-weight: bold;
+    font-size: 16px;
+    color: #333;
+    background: #fafafa;
+}
+
+.content {
+    padding: 30px;
+}
+
+.content > table {
+    width: 100%;
+    border-spacing: 0;
+}
+
+.text-right {
+    text-align: right;
+    width: 150px;
+    padding: 15px 20px;
+    font-weight: bold;
+    color: #666;
+    vertical-align: top;
+}
+
+.content_right {
+    padding: 15px 0;
+    vertical-align: top;
+}
+
+.input {
+    height: 40px;
+    line-height: 40px;
+    padding: 0 12px;
+    border-radius: 4px;
+    border: 1px solid #dcdfe6;
+    width: 300px;
+    font-size: 14px;
+    color: #606266;
+    background: #fff;
+    transition: border-color 0.2s;
+}
+
+.input:focus {
+    border-color: #409EFF;
+    box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+}
+
+.input:hover {
+    border-color: #c0c4cc;
+}
+
+.content td {
+    height: 60px;
+    line-height: 60px;
+    border-bottom: 1px solid #ebeef5;
+}
+
+.content td, .content input {
+    vertical-align: middle;
+}
+
+/* 按钮基础样式 */
+.btn {
+    display: inline-block;
+    min-width: 100px;
+    height: 40px;
+    line-height: 40px;
+    padding: 0 20px;
+    border: 1px solid;
+    border-radius: 4px;
+    margin-right: 12px;
+    text-decoration: none;
+    cursor: pointer !important;
+    font-size: 14px;
+    text-align: center;
+    font-weight: 500;
+    transition: all 0.3s;
+    position: relative;
+    z-index: 1;
+    pointer-events: auto !important;
+}
+
+.btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+/* 按钮颜色变体 */
+.btn-info {
+    background: #1890ff;
+    color: #fff;
+    border-color: #1890ff;
+}
+
+.btn-primary {
+    background: #67C23A;
+    color: #fff;
+    border-color: #67C23A;
+}
+
+.btn-success {
+    background: #409EFF;
+    color: #fff;
+    border-color: #409EFF;
+}
+
+.btn-danger {
+    background: #F56C6C;
+    color: #fff;
+    border-color: #F56C6C;
+    min-width: 100px;
+    height: 40px;
+    line-height: 40px;
+    padding: 0 20px;
+    font-size: 14px;
+    border-radius: 4px;
+    cursor: pointer !important;
+}
+
+.btn-warning {
+    background: #E6A23C;
+    color: #fff;
+    border-color: #E6A23C;
+}
+
+/* 禁用状态 */
+.btn:disabled {
+    background: #c0c4cc;
+    border-color: #c0c4cc;
+    color: #fff;
+    cursor: not-allowed !important;
+    opacity: 0.6;
+}
+
+.btn:disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.inline-input {
+    width: auto;
+    min-width: 200px;
+    margin-right: 10px;
+}
+
+/* 单选按钮组 */
+.radio-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.radio-group label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-weight: normal;
+}
+
+.radio-group input[type="radio"] {
+    margin-right: 6px;
+    width: 16px;
+    height: 16px;
+}
+
+/* 状态显示 */
+.status-display {
+    padding: 10px 0;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.status-pending {
+    color: #E6A23C;
+}
+
+.status-completed {
+    color: #67C23A;
+}
+
+/* 按钮组容器 */
+.button-group {
+    margin-top: 30px;
+    padding-left: 170px;
+}
+
+.button-group .btn {
+    margin-bottom: 10px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    .content {
+        padding: 15px;
+    }
+
+    .text-right, .content_right {
+        width: 100%;
+        display: block;
+        text-align: left;
+        padding: 10px;
+    }
+
+    .input {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .button-group {
+        padding-left: 0;
+        text-align: center;
+    }
+
+    .btn {
+        display: block;
+        width: 100%;
+        margin: 5px 0;
+    }
+
+    .inline-input {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+}
+
+/* 加载状态 */
+.loading-state {
+    text-align: center;
+    padding: 40px;
+    color: #909399;
+}
+
+.loading-state .loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #409EFF;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 错误状态 */
+.error-state {
+    text-align: center;
+    padding: 40px;
+    color: #F56C6C;
+}
+
+.error-state .error-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+/* 成功状态 */
+.success-state {
+    text-align: center;
+    padding: 40px;
+    color: #67C23A;
+}
+
+.success-state .success-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}

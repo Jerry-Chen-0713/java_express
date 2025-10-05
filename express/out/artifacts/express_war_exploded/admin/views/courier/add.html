@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>添加快递员</title>
+    <link rel="stylesheet" type="text/css" href="../../css/reset.css"/>
+    <link rel="stylesheet" type="text/css" href="../../css/add.css"/>
+</head>
+<body>
+<div id="app">
+    <div class="header">
+        <span>添加快递员</span>
+    </div>
+    <div class="content">
+        <form id="courierForm">
+            <table>
+                <tr>
+                    <td class="text-right">姓名</td>
+                    <td class="content_right">
+                        <input type="text" name="name" class="input" placeholder="请输入姓名" required>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-right">手机号码</td>
+                    <td class="content_right">
+                        <input type="text" name="phone" class="input" placeholder="请输入手机号码" required>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-right">身份证号</td>
+                    <td class="content_right">
+                        <input type="text" name="idCard" class="input" placeholder="请输入身份证号" required>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-right">密码</td>
+                    <td class="content_right">
+                        <input type="password" name="password" class="input" placeholder="请输入密码" required>
+                    </td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td class="content_right">
+                        <button type="submit" class="btn btn-info" style="padding: 9px 25px;">立即添加</button>
+                        <button type="reset" class="btn btn-primary" style="padding: 9px 25px;">重置</button>
+                        <a href="list.html" class="btn" style="padding: 9px 25px;">返回列表</a>
+                    </td>
+                </tr>
+            </table>
+        </form>
+    </div>
+</div>
+
+<script src="/qrcode/jquery2.1.4.js"></script>
+<script src="/layer/layer.js"></script>
+<script>
+    $(function(){
+        $('#courierForm').submit(function(e){
+            e.preventDefault();
+
+            var windowId = layer.load();
+            var formData = $(this).serialize();
+
+            $.post('/courier/insert.do', formData, function(data){
+                layer.close(windowId);
+
+                if(data.status == 0) {
+                    layer.msg(data.result, {icon: 1}, function(){
+                        window.location.href = 'list.html';
+                    });
+                } else {
+                    layer.msg(data.result, {icon: 2});
+                }
+            }).fail(function(){
+                layer.close(windowId);
+                layer.msg('添加失败，请重试', {icon: 2});
+            });
+        });
+    });
+</script>
+</body>
+</html>
