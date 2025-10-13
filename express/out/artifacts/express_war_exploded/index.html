@@ -91,7 +91,7 @@
 				case(4): window.location.href= "expressAssist.html"; break;
 				case(5):
 					//告知服务器
-						$.getJSON("/wx/logout.do",null,function (data) {
+						$.getJSON("/user/logout.do",null,function (data) {
 							window.location.href= "login.html";
 						});
 					 break;

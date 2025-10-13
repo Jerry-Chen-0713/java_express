@@ -46,6 +46,7 @@ public class UserController {
 
         String userPhone = request.getParameter("userPhone");
         String code = request.getParameter("code");
+        String password = request.getParameter("password");
 
         Message message = new Message();
 
@@ -55,18 +56,18 @@ public class UserController {
             message.setResult("手机号不能为空");
             return JSONUtil.toJSON(message);
         }
-
-        if(code == null || code.trim().isEmpty()) {
+        //新增密码验证
+        if((code == null || code.trim().isEmpty()) && (password == null || password.trim().isEmpty())) {
             message.setStatus(-1);
-            message.setResult("验证码不能为空");
+            message.setResult("验证码或密码不能为空");
             return JSONUtil.toJSON(message);
         }
 
-        return loginByCode(request, response, userPhone, code);
+        return loginByCode(request, response, userPhone, code, password);
     }
 
     // 验证码登录
-    private String loginByCode(HttpServletRequest request, HttpServletResponse response, String userPhone, String code) {
+    private String loginByCode(HttpServletRequest request, HttpServletResponse response, String userPhone, String code, String password) {
         Message message = new Message();
 
         try {
@@ -75,62 +76,87 @@ public class UserController {
             System.out.println("用户输入验证码: " + code);
 
             // 从session中获取保存的验证码信息
-            String savedCode = UserUtil.getLoginSMS(request.getSession(), userPhone);
-            System.out.println("Session中保存的验证码: " + savedCode);
+            if(password == null || password.trim().isEmpty()) {
+                String savedCode = UserUtil.getLoginSMS(request.getSession(), userPhone);
+                System.out.println("Session中保存的验证码: " + savedCode);
 
-            if(savedCode == null) {
-                System.out.println("验证码已过期或不存在");
-                message.setStatus(-1);
-                message.setResult("验证码已过期，请重新获取");
-                return JSONUtil.toJSON(message);
-            }
-
-            if(!savedCode.equals(code)) {
-                System.out.println("验证码不匹配，输入:" + code + ", 保存:" + savedCode);
-                message.setStatus(-1);
-                message.setResult("验证码错误");
-                return JSONUtil.toJSON(message);
-            }
-
-            System.out.println("验证码验证成功");
-
-            // 验证码正确，查找用户
-            User user = UserService.findByUserPhone(userPhone);
-            System.out.println("查找用户结果: " + user);
-
-            if(user == null) {
-                System.out.println("用户不存在，开始自动注册");
-                // 用户不存在，自动注册
-                user = new User();
-                user.setUserPhone(userPhone);
-                user.setUserName("用户_" + userPhone.substring(7));
-                user.setPassword(RandomUtil.getCode() + "");
-                user.setUser(true);
-
-                boolean registerResult = UserService.insert(user);
-                System.out.println("自动注册结果: " + registerResult);
-
-                if(!registerResult) {
+                if (savedCode == null) {
+                    System.out.println("验证码已过期或不存在");
                     message.setStatus(-1);
-                    message.setResult("自动注册失败，请重试");
+                    message.setResult("验证码已过期，请重新获取");
                     return JSONUtil.toJSON(message);
                 }
 
-                // 重新获取用户信息
-                user = UserService.findByUserPhone(userPhone);
-                System.out.println("重新获取用户: " + user);
+                if (!savedCode.equals(code)) {
+                    System.out.println("验证码不匹配，输入:" + code + ", 保存:" + savedCode);
+                    message.setStatus(-1);
+                    message.setResult("验证码错误");
+                    return JSONUtil.toJSON(message);
+                }
+
+                System.out.println("验证码验证成功");
+
+                // 验证码正确，查找用户
+                User user = UserService.findByUserPhone(userPhone);
+                System.out.println("查找用户结果: " + user);
+
+                if(user == null) {
+                    System.out.println("用户不存在，开始自动注册");
+                    // 用户不存在，自动注册
+                    user = new User();
+                    user.setUserPhone(userPhone);
+                    user.setUserName("用户_" + userPhone.substring(7));
+                    user.setPassword(RandomUtil.getCode() + "");
+                    user.setUser(true);
+
+                    boolean registerResult = UserService.insert(user);
+                    System.out.println("自动注册结果: " + registerResult);
+
+                    if(!registerResult) {
+                        message.setStatus(-1);
+                        message.setResult("自动注册失败，请重试");
+                        return JSONUtil.toJSON(message);
+                    }
+
+                    // 重新获取用户信息
+                    user = UserService.findByUserPhone(userPhone);
+                    System.out.println("重新获取用户: " + user);
+                }
+
+                // 更新登录时间
+                UserService.updateLoginTime(user.getId());
+
+                // 设置用户登录状态
+                UserUtil.setLoginUser(request.getSession(), user);
+                System.out.println("用户登录状态设置完成");
+
+                message.setStatus(0);
+                message.setResult("登录成功");
+                message.setData(user);
             }
+            //新增密码登录（无法用于注册）
+            else{
+                User user = UserService.findByUserPhone(userPhone);
+                System.out.println("查找用户结果: " + user);
 
-            // 更新登录时间
-            UserService.updateLoginTime(user.getId());
+                if(user == null || !user.getPassword().equals(password)) {
+                    System.out.println("用户不存在或密码错误");
+                    message.setStatus(-1);
+                    message.setResult("手机号或密码错误");
+                    return JSONUtil.toJSON(message);
+                }
+                // 更新登录时间
+                UserService.updateLoginTime(user.getId());
 
-            // 设置用户登录状态
-            UserUtil.setLoginUser(request.getSession(), user);
-            System.out.println("用户登录状态设置完成");
+                // 设置用户登录状态
+                UserUtil.setLoginUser(request.getSession(), user);
+                System.out.println("用户登录状态设置完成");
 
-            message.setStatus(0);
-            message.setResult("登录成功");
-            message.setData(user);
+                message.setStatus(0);
+                message.setResult("登录成功");
+                message.setData(user);
+
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
