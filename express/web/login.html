@@ -150,11 +150,11 @@
             layer.close(windowId);
             if(data.status == 0) {
                 // 用户登录成功
-                layer.msg(data.result, {icon: 1}, function(){
+                layer.msg(data.result, {icon: 1});
+                setTimeout(function(){
                     window.location.href = "index.html";
-                });
+                }, 1000);
             } else {
-                //window.location.href = "index.html";
                 layer.msg(data.result, {icon: 2});
             }
         }).fail(function(){

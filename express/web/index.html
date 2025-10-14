@@ -1,164 +1,265 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-	<title>快件e栈服务平台</title>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
-	<link href="css/normalize.css" type="text/css" rel="stylesheet" />
-	<link href="css/main.css" type="text/css" rel="stylesheet" />
-	<script src="js/jquery.min.js" type="text/javascript"></script>
-	<script src="js/notice.js"  type="text/javascript"></script>
-	<script src="js/common.js" type="text/javascript"></script>
+    <title>快件e栈服务平台</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+    <link href="css/normalize.css" type="text/css" rel="stylesheet" />
+    <link href="css/main.css" type="text/css" rel="stylesheet" />
+    <script src="js/jquery.min.js" type="text/javascript"></script>
+    <script src="js/notice.js"  type="text/javascript"></script>
+    <script src="js/common.js" type="text/javascript"></script>
+    <style>
+        /* 查询结果样式 */
+        #query-result {
+            margin: 20px auto;
+            max-width: 600px;
+            display: none; /* 默认隐藏 */
+        }
+        .query-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .query-table th, .query-table td {
+            border: 1px solid #eee;
+            padding: 10px;
+            text-align: left;
+            font-size: 14px;
+        }
+        .query-table th {
+            background-color: #f7f7f7;
+            font-weight: bold;
+        }
+        .no-result, .loading {
+            color: #999;
+            text-align: center;
+            margin-top: 20px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .loading {
+            color: #0078d7;
+        }
+
+        /* 调整原有样式适应新功能 */
+        .middle {
+            margin-bottom: 20px;
+        }
+        .forminput {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .forminput input {
+            flex: 1;
+            max-width: 400px;
+        }
+        .submBtn {
+            background-color: #0078d7;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 80px;
+        }
+        .submBtn:hover {
+            background-color: #005fa3;
+        }
+    </style>
 </head>
 <body>
-	<div class="content">
-		<div class="top autoH">
-			<div class="logo autoH">
-				<img src="images/logo.png" width="100%">
-			</div>
-		</div>
-		<div class="middle">
-			<form id="theForm">
-				<div class="forminput">
-					<input type="text" id="expressNum" name="expressNum" placeholder="请输入快递单号...">
-					<input id="PageContext" type="hidden" value="${pageContext.request.contextPath}" />
-					<div class="submBtn"></div>
-				</div>
-			</form>
-		</div>
-		<div class="funContdiv">
-			<div class="funCont">
-				<div class="userFun">
-					<p class="funIcon userFunColor1"></p>
-					<p class="funTxt">个人中心</p>
-				</div>
-				<div class="userFun">
-					<p class="funIcon userFunColor2"></p>
-					<p class="funTxt">懒人排行</p>
-				</div>
-				<div class="userFun">
-					<p class="funIcon userFunColor3"></p>
-					<p class="funTxt">取货二维码</p>
-				</div>
-				<div class="userFun">
-					<p class="funIcon userFunColor4"></p>
-					<p class="funTxt">我的快件</p>
-				</div>
-					<div class="userFun" id="userFun">
-						<p class="funIcon userFunColor5"></p>
-						<p class="funTxt">快递助手</p>
-					</div>
-					<div class="userFun">
-						<p class="funIcon userFunColor6"></p>
-						<p class="funTxt">退出登录</p>
-					</div>
-			</div>
-		</div>
-	
-		<div class="footer">
-			<p class="copytxt">&copy;XXX版权所有</p>
-		</div>
-	</div>
-	<script type="text/javascript">
-		var isUser;
-	$(function(){
-		$.getJSON("/wx/userInfo.do",null,function (data) {
-			//{status:0/1,result:手机号}
-			if(data.status == 0){
-				isUser = true;
-				$("#userFun").hide();
-			}
-			else
-				isUser = false;
-		});
-	});
+<div class="content">
+    <div class="top autoH">
+        <div class="logo autoH">
+            <img src="images/logo.png" width="100%">
+        </div>
+    </div>
+    <div class="middle">
+        <form id="theForm">
+            <div class="forminput">
+                <input type="text" id="expressNum" placeholder="请输入快递单号或手机号查询...">
+                <input id="PageContext" type="hidden" value="${pageContext.request.contextPath}" />
+                <div class="submBtn">查询</div>
+            </div>
+        </form>
+    </div>
 
+    <!-- 查询结果区域 -->
+    <div id="query-result"></div>
 
-	$(function(){
-		var pageContextVal = $("#PageContext").val();
-		$(".userFun").click(function(){
-			var clickNum = $(this).index();
-			switch(clickNum){
-				//个人中心
-				case(0): 
-					window.location.href= "wxUserhome.html"; 
-					break;
-				case(1): 
-					window.location.href= "lazyboard.html"; 
-					break;
-				case(2): window.location.href= "/wx/createQRCode.do?type=user"; break;
-				case(3): window.location.href= "expressList.html"; break;
-				case(4): window.location.href= "expressAssist.html"; break;
-				case(5):
-					//告知服务器
-						$.getJSON("/user/logout.do",null,function (data) {
-							window.location.href= "login.html";
-						});
-					 break;
-			}
-		});
+    <div class="funContdiv">
+        <div class="funCont">
+            <div class="userFun">
+                <p class="funIcon userFunColor1"></p>
+                <p class="funTxt">个人中心</p>
+            </div>
+            <div class="userFun">
+                <p class="funIcon userFunColor2"></p>
+                <p class="funTxt">懒人排行</p>
+            </div>
+            <div class="userFun">
+                <p class="funIcon userFunColor3"></p>
+                <p class="funTxt">取货二维码</p>
+            </div>
+            <div class="userFun">
+                <p class="funIcon userFunColor4"></p>
+                <p class="funTxt">我的快件</p>
+            </div>
+            <div class="userFun" id="userFun">
+                <p class="funIcon userFunColor5"></p>
+                <p class="funTxt">快递助手</p>
+            </div>
+            <div class="userFun">
+                <p class="funIcon userFunColor6"></p>
+                <p class="funTxt">退出登录</p>
+            </div>
+        </div>
+    </div>
 
-		var initFunc = function(){
-			var windowH = $(document).height();
-			var windowW = $(document).width();
+    <div class="footer">
+        <p class="copytxt">&copy;XXX版权所有</p>
+    </div>
+</div>
 
-			$(".content").css({"height": windowH+"px"});
+<script type="text/javascript">
+    // 快递查询功能
+    function renderTable(data) {
+        var html = "<table class='query-table'><tr><th>快递单号</th><th>用户姓名</th><th>用户手机号</th><th>快递公司</th><th>状态</th><th>入库时间</th></tr>";
+        data.forEach(function(item) {
+            html += "<tr>" +
+                "<td>" + (item.number || '-') + "</td>" +
+                "<td>" + (item.username || '-') + "</td>" +
+                "<td>" + (item.userPhone || '-') + "</td>" +
+                "<td>" + (item.company || '-') + "</td>" +
+                "<td>" + (item.status || '-') + "</td>" +
+                "<td>" + (item.inTime || '-') + "</td>" +
+                "</tr>";
+        });
+        html += "</table>";
+        $("#query-result").html(html).show();
+    }
 
-			var contentW = $(".content").width();
-			var contentH = $(".content").height();
+    function performSearch() {
+        var keyword = $("#expressNum").val().trim();
+        if (!keyword) {
+            alert("请输入快递单号或手机号");
+            return;
+        }
 
-			var contH = windowH / 3;
-			$(".autoH").css({"height": contH+"px"});
+        $("#query-result").html('<div class="loading">查询中，请稍候...</div>').show();
 
-			// userFunH  content
-			var middleH = $(".middle").height() + 40;
-			var userFunH = contentH - contH - middleH - 30 -20; //footer,userfun(margin)
-			$(".funContdiv").css({"height":userFunH+"px"});
+        $.ajax({
+            url: "/wx/findExpressByNumberOrPhone.do",
+            type: "GET",
+            data: { keyword: keyword },
+            dataType: "json",
+            success: function(res) {
+                console.log("后端返回数据：", res);
+                if (res && res.status === 0 && res.data && res.data.length > 0) {
+                    renderTable(res.data);
+                } else {
+                    var noDataMsg = res && res.result ? res.result : "未查询到相关快递信息";
+                    $("#query-result").html('<div class="no-result">' + noDataMsg + '</div>').show();
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("AJAX错误：", status, error);
+                $("#query-result").html('<div class="no-result">查询失败，请检查网络或接口是否正常</div>').show();
+            }
+        });
+    }
 
-			var funIconH = $(".funIcon").width(); 
-			$(".funIcon").css({"height": funIconH+"px","line-height": funIconH+"px","border-radius": funIconH/2 +"px","font-size":funIconH/2 +"px"});
+    // 原有功能代码
+    var isUser;
+    $(function(){
+        $.getJSON("/wx/userInfo.do",null,function (data) {
+            if(data.status == 0){
+                isUser = true;
+                $("#userFun").hide();
+            }
+            else
+                isUser = false;
+        });
 
-		};
+        // 修改查询按钮点击事件
+        $(".submBtn").click(function(){
+            performSearch();
+        });
 
-		initFunc();
+        // 支持回车键查询
+        $("#expressNum").keypress(function(e) {
+            if (e.which === 13) {
+                performSearch();
+                e.preventDefault(); // 阻止表单默认提交
+            }
+        });
 
-		$(window).resize(function(){
-			initFunc();
-		});
+        var pageContextVal = $("#PageContext").val();
+        $(".userFun").click(function(){
+            var clickNum = $(this).index();
+            switch(clickNum){
+                case(0): window.location.href= "wxUserhome.html"; break;
+                case(1): window.location.href= "lazyboard.html"; break;
+                case(2): window.location.href= "/wx/createQRCode.do?type=user"; break;
+                case(3): window.location.href= "expressList.html"; break;
+                case(4): window.location.href= "expressAssist.html"; break;
+                case(5):
+                    $.getJSON("/user/logout.do",null,function (data) {
+                        window.location.href= "login.html";
+                    });
+                    break;
+            }
+        });
 
-		// input focus
-		$(".middle .forminput input").focus(function(){
-			$(".middle .forminput").css({"border":"1px solid rgba(31,114,255,.75)","box-shadow":"0 0 8px rgba(31,114,255,.5)"});
-		});
+        var initFunc = function(){
+            var windowH = $(document).height();
+            var windowW = $(document).width();
 
-		// input blur
-		$(".middle .forminput input").blur(function(){
-			$(".middle .forminput").css({"border":"1px solid #333333","box-shadow":"none"});
-		});
+            $(".content").css({"height": windowH+"px"});
 
-		//submit arrow
-		$(".submBtn").click(function(){
-			var expressNum = $("#expressNum").val();//快递单号
-			 $.ajax({
-				    type:'GET',
-				    url:pageContextVal+'/ul/indexQueryExpress',
-				    data:{'expressNum':expressNum},
-				    dataType: "json",
-				    success:function(data){
-				    	var jsontmp = data;
-						switch(jsontmp.code) {
-							case "1" : rzAlert("操作提示",jsontmp.message); break;
-							case "0" : 
-								rzAlert("操作提示",jsontmp.message);
-								break;
-						}
-				    },
-				    error:function(){
-				      
-				    }
-				});
-		});
-	});
-	</script>
+            var contentW = $(".content").width();
+            var contentH = $(".content").height();
+
+            var contH = windowH / 3;
+            $(".autoH").css({"height": contH+"px"});
+
+            var middleH = $(".middle").height() + 40;
+            var userFunH = contentH - contH - middleH - 30 -20;
+            $(".funContdiv").css({"height":userFunH+"px"});
+
+            var funIconH = $(".funIcon").width();
+            $(".funIcon").css({"height": funIconH+"px","line-height": funIconH+"px","border-radius": funIconH/2 +"px","font-size":funIconH/2 +"px"});
+        };
+
+        initFunc();
+
+        $(window).resize(function(){
+            initFunc();
+        });
+
+        // input focus
+        $(".middle .forminput input").focus(function(){
+            $(".middle .forminput").css({"border":"1px solid rgba(31,114,255,.75)","box-shadow":"0 0 8px rgba(31,114,255,.5)"});
+        });
+
+        // input blur
+        $(".middle .forminput input").blur(function(){
+            $(".middle .forminput").css({"border":"1px solid #333333","box-shadow":"none"});
+        });
+    });
+</script>
 </body>
 </html>

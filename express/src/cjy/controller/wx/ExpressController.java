@@ -108,4 +108,64 @@ public class ExpressController {
         }
         return JSONUtil.toJSON(message);
     }
+
+    @ResponseBody("/wx/findExpressByNumberOrPhone.do")
+    public String findExpressByNumberOrPhone(HttpServletRequest request, HttpServletResponse response) {
+        String keyword = request.getParameter("keyword");
+        Message message = new Message();
+
+        if (keyword == null || keyword.trim().isEmpty()) {
+            message.setStatus(-1);
+            message.setResult("请输入快递单号或手机号");
+            return JSONUtil.toJSON(message);
+        }
+
+        List<Express> list = new ArrayList<>();
+
+        // 判断是否为手机号
+        if (keyword.matches("^1[3-9]\\d{9}$")) {
+            list = ExpressService.findByUserPhone(keyword);
+        } else {
+            Express e = ExpressService.findByNumber(keyword);
+            if (e != null) {
+                list.add(e);
+            }
+        }
+
+        if (list.isEmpty()) {
+            message.setStatus(-1);
+            message.setResult("未查询到相关快递信息");
+            return JSONUtil.toJSON(message);
+        }
+
+        // 转换成 BootstrapExpress
+        List<BootstrapExpress> resultList = new ArrayList<>();
+        for (Express e : list) {
+            String code = e.getCode() == null ? "已取件" : e.getCode();
+            String inTime = DateFormatUtil.format(e.getInTime());
+            String outTime = e.getOutTime() == null ? "未出库" : DateFormatUtil.format(e.getOutTime());
+            String status = e.getStatus() == 0 ? "待取件" : "已取件";
+            BootstrapExpress e2 = new BootstrapExpress(
+                    e.getId(),
+                    e.getNumber(),
+                    e.getUsername(),
+                    e.getUserPhone(),
+                    e.getCompany(),
+                    code,
+                    inTime,
+                    outTime,
+                    status,
+                    e.getSysPhone()
+            );
+            resultList.add(e2);
+        }
+
+        message.setStatus(0);
+        message.setResult("查询成功");
+        message.setData(resultList);
+        return JSONUtil.toJSON(message);
+    }
+
+
+
 }

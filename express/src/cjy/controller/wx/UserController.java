@@ -309,20 +309,50 @@ public class UserController {
     @ResponseBody("/user/update.do")
     public String update(HttpServletRequest request, HttpServletResponse response){
         try {
-            String idStr = request.getParameter("id");
             String userName = request.getParameter("userName");
             String userPhone = request.getParameter("userPhone");
             String password = request.getParameter("password");
+            String code = request.getParameter("code");
 
-            Integer id = Integer.parseInt(idStr);
+            Message message = new Message();
 
-            User user = new User();
-            user.setUserName(userName);
-            user.setUserPhone(userPhone);
-            user.setPassword(password);
+            if(userPhone !=null && !userPhone.trim().isEmpty()) {
+                String savedCode = UserUtil.getLoginSMS(request.getSession(), userPhone);
+                System.out.println("Session中保存的验证码: " + savedCode);
+
+                if (savedCode == null) {
+                    System.out.println("验证码已过期或不存在");
+                    message.setStatus(-1);
+                    message.setResult("验证码已过期，请重新获取");
+                    return JSONUtil.toJSON(message);
+                }
+
+                if (!savedCode.equals(code)) {
+                    System.out.println("验证码不匹配，输入:" + code + ", 保存:" + savedCode);
+                    message.setStatus(-1);
+                    message.setResult("验证码错误");
+                    return JSONUtil.toJSON(message);
+                }
+            }
+
+
+            User user = UserUtil.getLoginUser(request.getSession());
+            Integer id=user.getId();
+            if(userName != null && !userName.trim().isEmpty()) {
+                user.setUserName(userName);
+            }
+
+            if(password != null && !password.trim().isEmpty()) {
+                user.setPassword(password);
+            }
+
+            if(userPhone !=null && !userPhone.trim().isEmpty()){
+                user.setUserPhone(userPhone);
+            }
+
 
             boolean result = UserService.update(id, user);
-            Message message = new Message();
+
             if(result) {
                 message.setStatus(0);
                 message.setResult("修改成功");
