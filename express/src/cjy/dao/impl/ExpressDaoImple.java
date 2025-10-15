@@ -234,19 +234,20 @@ public class ExpressDaoImple implements BaseExpressDao {
     @Override
     public List<Express> findByUserPhone(String userPhone) {
         List<Express> data = new ArrayList<>();
-        //1.获取数据库的连接
+        System.out.println("=== DAO层: 开始查询用户手机号: '" + userPhone + "' ===");
+
         Connection connection = DruidUtil.getConnection();
-        //2.预编译SQL语句
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
         try {
             preparedStatement = connection.prepareStatement(SQL_FIND_BY_USERPHONE);
-            //3.填充参数（可选）
-            preparedStatement.setString(1,userPhone);
-            //4.执行SQL语句
+            preparedStatement.setString(1, userPhone);
+            System.out.println("=== DAO层: 执行SQL: " + SQL_FIND_BY_USERPHONE + " 参数: " + userPhone + " ===");
+
             resultSet = preparedStatement.executeQuery();
-            //5.获取执行结果
+            int count = 0;
             while(resultSet.next()){
+                count++;
                 int id = resultSet.getInt("id");
                 String number = resultSet.getString("number");
                 String username = resultSet.getString("username");
@@ -258,11 +259,15 @@ public class ExpressDaoImple implements BaseExpressDao {
                 String sysPhone = resultSet.getString("sysPhone");
                 Express express = new Express(id,number,username,userPhone,company,code,inTime,outTime,status,sysPhone);
                 data.add(express);
+
+                System.out.println("=== DAO层: 找到快递 " + count + ": ID=" + id + ", 单号=" + number + ", 状态=" + status + " ===");
             }
+            System.out.println("=== DAO层: 查询完成，共找到 " + count + " 条记录 ===");
+
         } catch (SQLException throwables) {
+            System.err.println("=== DAO层: 查询出错 ===");
             throwables.printStackTrace();
-        }finally {
-            //6.释放资源
+        } finally {
             DruidUtil.close(connection,preparedStatement,resultSet);
         }
         return data;
