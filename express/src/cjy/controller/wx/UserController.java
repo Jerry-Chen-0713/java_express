@@ -46,6 +46,31 @@ public class UserController {
 
         String userPhone = request.getParameter("userPhone");
         String code = request.getParameter("code");
+
+        Message message = new Message();
+
+        // 参数验证
+        if(userPhone == null || userPhone.trim().isEmpty()) {
+            message.setStatus(-1);
+            message.setResult("手机号不能为空");
+            return JSONUtil.toJSON(message);
+        }
+        //新增密码验证
+        if(code == null || code.trim().isEmpty()) {
+            message.setStatus(-1);
+            message.setResult("验证码或密码不能为空");
+            return JSONUtil.toJSON(message);
+        }
+
+        return loginByCode(request, response, userPhone, code);
+    }
+
+    @ResponseBody("/user/loginPassword.do")
+    public String loginPassword(HttpServletRequest request, HttpServletResponse response){
+        // 设置响应编码
+        response.setContentType("application/json;charset=UTF-8");
+
+        String userPhone = request.getParameter("userPhone");
         String password = request.getParameter("password");
 
         Message message = new Message();
@@ -57,17 +82,58 @@ public class UserController {
             return JSONUtil.toJSON(message);
         }
         //新增密码验证
-        if((code == null || code.trim().isEmpty()) && (password == null || password.trim().isEmpty())) {
+        if(password == null || password.trim().isEmpty()) {
             message.setStatus(-1);
-            message.setResult("验证码或密码不能为空");
+            message.setResult("密码不能为空");
             return JSONUtil.toJSON(message);
         }
 
-        return loginByCode(request, response, userPhone, code, password);
+        return loginByPassword(request, response, userPhone,password);
     }
 
+    private String loginByPassword(HttpServletRequest request, HttpServletResponse response, String userPhone, String password) {
+        Message message = new Message();
+
+        try {
+            System.out.println("=== 开始登录验证 ===");
+            System.out.println("用户手机号: " + userPhone);
+            System.out.println("用户输入密码: " + password);
+
+            User user = UserService.findByUserPhone(userPhone);
+            System.out.println("查找用户结果: " + user);
+
+            if(user == null || !user.getPassword().equals(password)) {
+                System.out.println("用户不存在或密码错误");
+                message.setStatus(-1);
+                message.setResult("手机号或密码错误");
+                return JSONUtil.toJSON(message);
+                }
+            // 更新登录时间
+            UserService.updateLoginTime(user.getId());
+
+            // 设置用户登录状态
+            UserUtil.setLoginUser(request.getSession(), user);
+            System.out.println("用户登录状态设置完成");
+
+            message.setStatus(0);
+            message.setResult("登录成功");
+            message.setData(user);
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("登录异常: " + e.getMessage());
+            message.setStatus(-1);
+            message.setResult("登录失败：" + e.getMessage());
+        }
+
+        return JSONUtil.toJSON(message);
+    }
+
+
+
     // 验证码登录
-    private String loginByCode(HttpServletRequest request, HttpServletResponse response, String userPhone, String code, String password) {
+    private String loginByCode(HttpServletRequest request, HttpServletResponse response, String userPhone, String code) {
         Message message = new Message();
 
         try {
@@ -76,87 +142,62 @@ public class UserController {
             System.out.println("用户输入验证码: " + code);
 
             // 从session中获取保存的验证码信息
-            if(password == null || password.trim().isEmpty()) {
-                String savedCode = UserUtil.getLoginSMS(request.getSession(), userPhone);
-                System.out.println("Session中保存的验证码: " + savedCode);
+            String savedCode = UserUtil.getLoginSMS(request.getSession(), userPhone);
+            System.out.println("Session中保存的验证码: " + savedCode);
 
-                if (savedCode == null) {
-                    System.out.println("验证码已过期或不存在");
-                    message.setStatus(-1);
-                    message.setResult("验证码已过期，请重新获取");
-                    return JSONUtil.toJSON(message);
-                }
+            if (savedCode == null) {
+                System.out.println("验证码已过期或不存在");
+                message.setStatus(-1);
+                message.setResult("验证码已过期，请重新获取");
+                return JSONUtil.toJSON(message);
+            }
 
-                if (!savedCode.equals(code)) {
-                    System.out.println("验证码不匹配，输入:" + code + ", 保存:" + savedCode);
-                    message.setStatus(-1);
-                    message.setResult("验证码错误");
-                    return JSONUtil.toJSON(message);
-                }
+            if (!savedCode.equals(code)) {
+                System.out.println("验证码不匹配，输入:" + code + ", 保存:" + savedCode);
+                message.setStatus(-1);
+                message.setResult("验证码错误");
+                return JSONUtil.toJSON(message);
+            }
 
-                System.out.println("验证码验证成功");
+            System.out.println("验证码验证成功");
 
                 // 验证码正确，查找用户
-                User user = UserService.findByUserPhone(userPhone);
-                System.out.println("查找用户结果: " + user);
+            User user = UserService.findByUserPhone(userPhone);
+            System.out.println("查找用户结果: " + user);
 
-                if(user == null) {
-                    System.out.println("用户不存在，开始自动注册");
-                    // 用户不存在，自动注册
-                    user = new User();
-                    user.setUserPhone(userPhone);
-                    user.setUserName("用户_" + userPhone.substring(7));
-                    user.setPassword(RandomUtil.getCode() + "");
-                    user.setUser(true);
+            if(user == null) {
+                System.out.println("用户不存在，开始自动注册");
+                // 用户不存在，自动注册
+                user = new User();
+                user.setUserPhone(userPhone);
+                user.setUserName("用户_" + userPhone.substring(7));
+                user.setPassword(RandomUtil.getCode() + "");
+                user.setUser(true);
 
-                    boolean registerResult = UserService.insert(user);
-                    System.out.println("自动注册结果: " + registerResult);
+                boolean registerResult = UserService.insert(user);
+                System.out.println("自动注册结果: " + registerResult);
 
-                    if(!registerResult) {
-                        message.setStatus(-1);
-                        message.setResult("自动注册失败，请重试");
-                        return JSONUtil.toJSON(message);
-                    }
-
-                    // 重新获取用户信息
-                    user = UserService.findByUserPhone(userPhone);
-                    System.out.println("重新获取用户: " + user);
-                }
-
-                // 更新登录时间
-                UserService.updateLoginTime(user.getId());
-
-                // 设置用户登录状态
-                UserUtil.setLoginUser(request.getSession(), user);
-                System.out.println("用户登录状态设置完成");
-
-                message.setStatus(0);
-                message.setResult("登录成功");
-                message.setData(user);
-            }
-            //新增密码登录（无法用于注册）
-            else{
-                User user = UserService.findByUserPhone(userPhone);
-                System.out.println("查找用户结果: " + user);
-
-                if(user == null || !user.getPassword().equals(password)) {
-                    System.out.println("用户不存在或密码错误");
+                if(!registerResult) {
                     message.setStatus(-1);
-                    message.setResult("手机号或密码错误");
+                    message.setResult("自动注册失败，请重试");
                     return JSONUtil.toJSON(message);
                 }
-                // 更新登录时间
-                UserService.updateLoginTime(user.getId());
 
-                // 设置用户登录状态
-                UserUtil.setLoginUser(request.getSession(), user);
-                System.out.println("用户登录状态设置完成");
-
-                message.setStatus(0);
-                message.setResult("登录成功");
-                message.setData(user);
-
+                // 重新获取用户信息
+                user = UserService.findByUserPhone(userPhone);
+                System.out.println("重新获取用户: " + user);
             }
+
+            // 更新登录时间
+            UserService.updateLoginTime(user.getId());
+
+            // 设置用户登录状态
+            UserUtil.setLoginUser(request.getSession(), user);
+            System.out.println("用户登录状态设置完成");
+
+            message.setStatus(0);
+            message.setResult("登录成功");
+            message.setData(user);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -306,12 +347,73 @@ public class UserController {
         }
     }
 
-    @ResponseBody("/user/update.do")
-    public String update(HttpServletRequest request, HttpServletResponse response){
+    @ResponseBody("/user/updateUserName.do")
+    public String updateUserName(HttpServletRequest request, HttpServletResponse response){
         try {
             String userName = request.getParameter("userName");
-            String userPhone = request.getParameter("userPhone");
+            Message message = new Message();
+
+            User user = UserUtil.getLoginUser(request.getSession());
+            Integer id=user.getId();
+            if(userName != null && !userName.trim().isEmpty()) {
+                user.setUserName(userName);
+            }
+
+            boolean result = UserService.update(id, user);
+
+            if(result) {
+                message.setStatus(0);
+                message.setResult("修改成功");
+            } else {
+                message.setStatus(-1);
+                message.setResult("修改失败");
+            }
+            return JSONUtil.toJSON(message);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Message message = new Message();
+            message.setStatus(-1);
+            message.setResult("修改失败: " + e.getMessage());
+            return JSONUtil.toJSON(message);
+        }
+    }
+
+    @ResponseBody("/user/updateUserPassword.do")
+    public String updateUserPassword(HttpServletRequest request, HttpServletResponse response){
+        try {
             String password = request.getParameter("password");
+
+            Message message = new Message();
+
+            User user = UserUtil.getLoginUser(request.getSession());
+            Integer id=user.getId();
+            if(password != null && !password.trim().isEmpty()) {
+                user.setPassword(password);
+            }
+
+            boolean result = UserService.update(id, user);
+
+            if(result) {
+                message.setStatus(0);
+                message.setResult("修改成功");
+            } else {
+                message.setStatus(-1);
+                message.setResult("修改失败");
+            }
+            return JSONUtil.toJSON(message);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Message message = new Message();
+            message.setStatus(-1);
+            message.setResult("修改失败: " + e.getMessage());
+            return JSONUtil.toJSON(message);
+        }
+    }
+
+    @ResponseBody("/user/updateUserPhone.do")
+    public String updateUserPhone(HttpServletRequest request, HttpServletResponse response){
+        try {
+            String userPhone = request.getParameter("userPhone");
             String code = request.getParameter("code");
 
             Message message = new Message();
@@ -335,21 +437,11 @@ public class UserController {
                 }
             }
 
-
             User user = UserUtil.getLoginUser(request.getSession());
             Integer id=user.getId();
-            if(userName != null && !userName.trim().isEmpty()) {
-                user.setUserName(userName);
-            }
-
-            if(password != null && !password.trim().isEmpty()) {
-                user.setPassword(password);
-            }
-
             if(userPhone !=null && !userPhone.trim().isEmpty()){
                 user.setUserPhone(userPhone);
             }
-
 
             boolean result = UserService.update(id, user);
 

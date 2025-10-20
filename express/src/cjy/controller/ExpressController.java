@@ -206,4 +206,52 @@ public class ExpressController {
             return JSONUtil.toJSON(message);
         }
     }
+
+    @ResponseBody("/express/rank.do")
+    public String rank(HttpServletRequest request, HttpServletResponse response) {
+        String period = request.getParameter("period");
+        if (period == null || period.trim().isEmpty()) {
+            period = "total";
+        }
+        // 直接用 ExpressService.findAll 查询所有快递，统计 username 数量
+        List<Express> list = ExpressService.findAll(true, 0, Integer.MAX_VALUE);
+        Map<String, Integer> countMap = new java.util.HashMap<>();
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        for (Express e : list) {
+            boolean match = true;
+            if ("year".equals(period)) {
+                cal.setTime(e.getInTime());
+                match = cal.get(java.util.Calendar.YEAR) == java.util.Calendar.getInstance().get(java.util.Calendar.YEAR);
+            } else if ("month".equals(period)) {
+                cal.setTime(e.getInTime());
+                java.util.Calendar now = java.util.Calendar.getInstance();
+                match = cal.get(java.util.Calendar.YEAR) == now.get(java.util.Calendar.YEAR)
+                        && cal.get(java.util.Calendar.MONTH) == now.get(java.util.Calendar.MONTH);
+            }
+            if (match) {
+                String username = e.getUsername();
+                countMap.put(username, countMap.getOrDefault(username, 0) + 1);
+            }
+        }
+        // 排序
+        List<Map<String, Object>> rankList = new ArrayList<>();
+        countMap.entrySet().stream()
+                .sorted((a, b) -> b.getValue() - a.getValue())
+                .limit(100)
+                .forEach(entry -> {
+                    Map<String, Object> m = new java.util.HashMap<>();
+                    m.put("username", entry.getKey());
+                    m.put("count", entry.getValue());
+                    m.put("avatar", "images/userHeadImg.jpg");
+                    rankList.add(m);
+                });
+        Message message = new Message();
+        if (rankList.isEmpty()) {
+            message.setStatus(-1);
+        } else {
+            message.setStatus(0);
+        }
+        message.setData(rankList);
+        return JSONUtil.toJSON(message);
+    }
 }

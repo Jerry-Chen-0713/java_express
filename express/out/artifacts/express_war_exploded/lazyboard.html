@@ -192,6 +192,72 @@
 		 }
 	</style>
 </head>
+
+<script type="text/javascript">
+    $(function(){
+        var periodMap = ['total','year','month'];
+        function renderTop3(data){
+            var topHtml = '';
+            for(var i=0;i<3;i++){
+                var item = data[i] || {username:'--',count:0,avatar:'images/userHeadImg.jpg'};
+                var cls = i===1 ? 'ranknum1' : (i===0 ? 'ranknum2' : 'ranknum3');
+                var iconCls = i===1 ? 'rankNum1Icon' : (i===0 ? 'rankNum2Icon' : 'rankNum3Icon');
+                topHtml += '<div class="ranknumDiv">'+
+                    '<div class="'+cls+'"><img src="'+(item.avatar||'images/userHeadImg.jpg')+'" width="100%"></div>'+
+                    '<div class="'+iconCls+'"></div>'+
+                    '<div class="rankNumName">'+(item.username||'--')+'</div>'+
+                    '</div>';
+            }
+            $(".lazyboardHead .lazyboardRank").html(topHtml);
+        }
+
+        function renderList(container, data){
+            var html = '';
+            for(var i=0;i<data.length;i++){
+                var it = data[i];
+                html += '<div class="lazyboardRankDiv">'+
+                    '<div class="lazyboardRankNumTxt">' + (i+1) + '</div>'+
+                    '<div class="lazyboardRankIcon"><img src="'+(it.avatar||'images/userHeadImg.jpg')+'" width="100%"></div>'+
+                    '<div class="lazyboardRankNameTxt">'+ (it.username||'--') +'</div>'+
+                    '<div class="lazyboardRankScore">'+ (it.count||0) +'</div>'+
+                    '</div>';
+            }
+            container.html(html);
+        }
+
+        function loadRank(period, idx){
+            $.get('/express/rank.do', {period: period}, function(resp){
+                var msg = (typeof resp === 'string')? JSON.parse(resp) : resp;
+                if(!msg || msg.status !== 0) return;
+                var data = msg.data || [];
+                renderTop3(data);
+                if(idx===0) renderList($(".tab1"), data);
+                if(idx===1) renderList($(".tab2"), data);
+                if(idx===2) renderList($(".tab3"), data);
+            }).fail(function(){ console.error("加载排行失败"); });
+        }
+
+        // 初始加载 total
+        loadRank('total', 0);
+
+        // Tab 切换时按 index 请求不同 period，并左右滚动
+        $(".lazyboardNavCont .lazyboardNav").click(function(){
+            var idx = $(this).index();
+            var period = periodMap[idx] || 'total';
+            $(this).siblings().removeClass("lazyboardNavFocus");
+            $(this).addClass("lazyboardNavFocus");
+            var windowW = $(window).width();
+            if (windowW > 600) windowW = 600;
+            switch(idx){
+                case 0: $(".boardRankScroll").stop().animate({"margin-left": "0px"}); break;
+                case 1: $(".boardRankScroll").stop().animate({"margin-left": -windowW+"px"}); break;
+                case 2: $(".boardRankScroll").stop().animate({"margin-left": -windowW*2+"px"}); break;
+            }
+            loadRank(period, idx);
+        });
+    });
+</script>
+
 <body>
 	<div class="content">
 	<div class="headerNav">
@@ -200,8 +266,8 @@
 			<a href="./index.html">快递首页</a>
 			<a href="./userhome.html">个人中心</a>
 			<a href="./delivery.html">送货上门</a>
-<!-- 			<a href="./sendexpress.html">我要寄件</a>
- -->			<a href="./lazyboard.html">懒人排行</a>
+            <!--<a href="./sendexpress.html">我要寄件</a>-->
+            <a href="./lazyboard.html">懒人排行</a>
 			<a href="./expassistant.html">快递助手</a>
 		</div>
 	</div>
@@ -215,21 +281,21 @@
 									<img src="images/userHeadImg.jpg" width="100%">
 								</div>
 								<div class="rankNum2Icon"></div>
-								<div class="rankNumName">苍井老师</div>
+								<div class="rankNumName">加载中</div>
 							</div>
 				        	 <div class="ranknumDiv">
 								<div class="ranknum1">
 									<img src="images/userHeadImg.jpg" width="100%">
 								</div>
 								<div class="rankNum1Icon"></div>
-								<div class="rankNumName">天海翼老师</div>
+								<div class="rankNumName">加载中</div>
 							</div>
 				        	 <div class="ranknumDiv">
 								<div class="ranknum3">
 									<img src="images/userHeadImg.jpg" width="100%">
 								</div>
 								<div class="rankNum3Icon"></div>
-								<div class="rankNumName">加藤老师</div>
+								<div class="rankNumName">加载中</div>
 							</div>
 				
 			</div>
@@ -248,7 +314,7 @@
 							<div class="lazyboardRankIcon">
 								<img src="images/userHeadImg.jpg" width="100%">
 							</div>
-							<div class="lazyboardRankNameTxt">大帅比</div>
+							<div class="lazyboardRankNameTxt">加载中</div>
 							<div class="lazyboardRankScore">15</div>
 						</div>
 					     <div class="lazyboardRankDiv">
@@ -256,7 +322,7 @@
 							<div class="lazyboardRankIcon">
 								<img src="images/userHeadImg.jpg" width="100%">
 							</div>
-							<div class="lazyboardRankNameTxt">中帅比</div>
+							<div class="lazyboardRankNameTxt">加载中</div>
 							<div class="lazyboardRankScore">9</div>
 						</div>
 					     <div class="lazyboardRankDiv">
@@ -264,7 +330,7 @@
 							<div class="lazyboardRankIcon">
 								<img src="images/userHeadImg.jpg" width="100%">
 							</div>
-							<div class="lazyboardRankNameTxt">小帅</div>
+							<div class="lazyboardRankNameTxt">加载中</div>
 							<div class="lazyboardRankScore">8</div>
 						</div>
 			</div>
@@ -275,7 +341,7 @@
 							<div class="lazyboardRankIcon">
 								<img src="images/userHeadImg.jpg" width="100%">
 							</div>
-							<div class="lazyboardRankNameTxt">大帅比</div>
+							<div class="lazyboardRankNameTxt">加载中</div>
 							<div class="lazyboardRankScore">15</div>
 						</div>
 					     <div class="lazyboardRankDiv">
@@ -283,7 +349,7 @@
 							<div class="lazyboardRankIcon">
 								<img src="images/userHeadImg.jpg" width="100%">
 							</div>
-							<div class="lazyboardRankNameTxt">中帅比</div>
+							<div class="lazyboardRankNameTxt">加载中</div>
 							<div class="lazyboardRankScore">9</div>
 						</div>
 					     <div class="lazyboardRankDiv">
@@ -291,7 +357,7 @@
 							<div class="lazyboardRankIcon">
 								<img src="images/userHeadImg.jpg" width="100%">
 							</div>
-							<div class="lazyboardRankNameTxt">小帅</div>
+							<div class="lazyboardRankNameTxt">加载中</div>
 							<div class="lazyboardRankScore">8</div>
 						</div>
 			</div>
@@ -302,7 +368,7 @@
 							<div class="lazyboardRankIcon">
 								<img src="images/userHeadImg.jpg" width="100%">
 							</div>
-							<div class="lazyboardRankNameTxt">大帅比</div>
+							<div class="lazyboardRankNameTxt">加载中</div>
 							<div class="lazyboardRankScore">15</div>
 						</div>
 					     <div class="lazyboardRankDiv">
@@ -310,7 +376,7 @@
 							<div class="lazyboardRankIcon">
 								<img src="images/userHeadImg.jpg" width="100%">
 							</div>
-							<div class="lazyboardRankNameTxt">中帅比</div>
+							<div class="lazyboardRankNameTxt">加载中</div>
 							<div class="lazyboardRankScore">9</div>
 						</div>
 					     <div class="lazyboardRankDiv">
@@ -318,37 +384,13 @@
 							<div class="lazyboardRankIcon">
 								<img src="images/userHeadImg.jpg" width="100%">
 							</div>
-							<div class="lazyboardRankNameTxt">小帅</div>
+							<div class="lazyboardRankNameTxt">加载中</div>
 							<div class="lazyboardRankScore">8</div>
 						</div>
 		</div>
-		
 	</div>
 </div>
 
-<script type="text/javascript">
-	$(function() {
-		$(".lazyboardNavCont .lazyboardNav").click(function(){
-			var windowW = $(window).width();
-			if (windowW > 600) {
-				windowW = 600;
-			}
-			var indexnum = $(this).index();
-			var focusnum = $(".lazyboardNavCont .lazyboardNav").index($(".lazyboardNavFocus"));
-			$(this).siblings().removeClass("lazyboardNavFocus");
-			$(this).addClass("lazyboardNavFocus");
 
-			if (indexnum != focusnum) {
-				$(".boardRankScroll").stop();
-
-				switch(indexnum){
-					case 0 : $(".boardRankScroll").animate({"margin-left": "0px"});	 break;
-					case 1 : $(".boardRankScroll").animate({"margin-left": -windowW+"px"}); break;
-					case 2 : $(".boardRankScroll").animate({"margin-left": -windowW*2+"px"}); break;
-				}
-			}
-		});
-	});
-</script>
 </body>
 </html>
