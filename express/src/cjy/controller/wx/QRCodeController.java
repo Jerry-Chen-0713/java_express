@@ -15,34 +15,29 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-/**
- * @author yemage
- */
 public class QRCodeController {
 
-    @ResponseView("/wx/createQRCode.do")
+    @ResponseBody("/wx/createQRCode.do")
     public String createQrCode(HttpServletRequest request, HttpServletResponse response){
-
         String code = request.getParameter("code");
-        //express |user
         String type = request.getParameter("type");
-        String userPhone = null;
         String qRCodeContent = null;
         if("express".equals(type)){
-            //快递二维码，被扫后，展示单个快递的信息
-            //code
             qRCodeContent = "express_" + code;
         }else{
-            //用户二维码：被扫后，快递员（柜子）端展示用户所有的快递
-            //userPhone
-            User wxUser = UserUtil.getWxUser(request.getSession());
-            userPhone = wxUser.getUserPhone();
+            User wxUser = UserUtil.getLoginUser(request.getSession());
+            if (wxUser == null) {
+                Message message = new Message("用户未登录，无法生成二维码", -1);
+                return JSONUtil.toJSON(message);
+            }
+            String userPhone = wxUser.getUserPhone();
             qRCodeContent = "userPhone_" + userPhone ;
         }
         HttpSession session = request.getSession();
         session.setAttribute("qrcode",qRCodeContent);
-        return "/personQRcode.html";
 
+        Message message = new Message("二维码信息已准备好", 0);
+        return JSONUtil.toJSON(message);
     }
 
 
