@@ -14,6 +14,9 @@ public class CourierController {
 
     @ResponseBody("/courier/console.do")
     public String console(HttpServletRequest request, HttpServletResponse response) {
+        // 设置响应编码
+        response.setContentType("application/json;charset=UTF-8");
+        
         List<Map<String, Integer>> console = CourierService.console();
         Message message = new Message();
         if(console.size() == 0) {
@@ -29,6 +32,9 @@ public class CourierController {
 
     @ResponseBody("/courier/list.do")
     public String list(HttpServletRequest request, HttpServletResponse response) {
+        // 设置响应编码
+        response.setContentType("application/json;charset=UTF-8");
+        
         try {
             int offset = Integer.parseInt(request.getParameter("offset"));
             int pageNumber = Integer.parseInt(request.getParameter("pageNumber"));

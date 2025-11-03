@@ -27,18 +27,25 @@ public class HandlerMapping {
     public static void load(InputStream is){
         Properties properties = new Properties();
         try {
+            System.out.println("=== HandlerMapping: 开始加载配置文件 ===");
             properties.load(is);
             //获取配置文件中描述的一个个的类
             Collection<Object> values = properties.values();
+            System.out.println("=== HandlerMapping: 找到 " + values.size() + " 个控制器类 ===");
+            
             for (Object cla:values) {
                 String className = (String)cla;
+                System.out.println("=== HandlerMapping: 加载控制器类: " + className + " ===");
                 try {
                     //加载配置文件中描述的每一个类
                     Class c = Class.forName(className);
                     //创建这个类的对象
                     Object o = c.getConstructor().newInstance();
+                    System.out.println("=== HandlerMapping: 控制器实例化成功: " + className + " ===");
+                    
                     //获取这个类的所有方法
                     Method[] methods = c.getMethods();
+                    int methodCount = 0;
                     for (Method m:methods){
                         Annotation[] an = m.getAnnotations();
                         if(an != null){
@@ -46,30 +53,40 @@ public class HandlerMapping {
                                 if(annotation instanceof ResponseBody){
                                     //说明此方法，用于返回字符串给客户端
                                     MVCMapping mapping = new MVCMapping(o,m,ResponseType.TEXT);
-                                    Object object = data.put(((ResponseBody) annotation).value(), mapping);
+                                    String url = ((ResponseBody) annotation).value();
+                                    Object object = data.put(url, mapping);
                                     if(object != null){
                                         //存在了重复的请求地址
-                                        throw new RuntimeException("请求地址重复：" + ((ResponseBody) annotation).value());
+                                        throw new RuntimeException("请求地址重复：" + url);
                                     }
+                                    System.out.println("=== HandlerMapping: 注册URL映射: " + url + " -> " + className + "." + m.getName() + " ===");
+                                    methodCount++;
                                 }else if(annotation instanceof ResponseView){
                                     //说明此方法，用于返回界面给客户端
                                     MVCMapping mapping = new MVCMapping(o,m,ResponseType.VIEW);
-                                    Object object = data.put(((ResponseView) annotation).value(),mapping);
+                                    String url = ((ResponseView) annotation).value();
+                                    Object object = data.put(url, mapping);
                                     if(object != null){
                                         //存在了重复的请求地址
-                                        throw new RuntimeException("请求地址重复：" + ((ResponseView) annotation).value());
+                                        throw new RuntimeException("请求地址重复：" + url);
                                     }
-
+                                    System.out.println("=== HandlerMapping: 注册URL映射: " + url + " -> " + className + "." + m.getName() + " ===");
+                                    methodCount++;
                                 }
                             }
                         }
                     }
+                    System.out.println("=== HandlerMapping: 控制器 " + className + " 注册了 " + methodCount + " 个方法 ===");
 
-                } catch (ClassNotFoundException e) {
+                } catch (Exception e) {
+                    System.err.println("=== HandlerMapping: 加载控制器类失败: " + className + " ===");
+                    System.err.println("=== HandlerMapping: 异常信息: " + e.getMessage());
                     e.printStackTrace();
                 }
             }
+            System.out.println("=== HandlerMapping: 配置加载完成，共注册 " + data.size() + " 个URL映射 ===");
         } catch (Exception e) {
+            System.err.println("=== HandlerMapping: 配置文件加载失败 ===");
             e.printStackTrace();
         }
     }

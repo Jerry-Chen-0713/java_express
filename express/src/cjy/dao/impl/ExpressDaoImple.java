@@ -12,12 +12,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * @author yemage
+ * @author 
  */
 public class ExpressDaoImple implements BaseExpressDao {
 
     //用于查询数据库中的全部快递（总数+新增），待取件快递（总数+新增）
-    public static final String SQL_CONSOLE = "SELECT COUNT(ID) data1_size,COUNT(TO_DAYS(INTIME)=TO_DAYS(NOW()) OR NULL) data1_day,COUNT(STATUS=0 OR NUll) data2_size,COUNT(TO_DAYS(INTIME)=TO_DAYS(NOW()) AND STATUS=0 OR NULL) data2_day FROM EXPRESS";
+    public static final String SQL_CONSOLE = "SELECT COUNT(ID) data1_size,COUNT(TO_DAYS(in_time)=TO_DAYS(NOW()) OR NULL) data1_day,COUNT(STATUS=0 OR NUll) data2_size,COUNT(TO_DAYS(in_time)=TO_DAYS(NOW()) AND STATUS=0 OR NULL) data2_day FROM EXPRESS";
     //用于分页查询数据库中的快递信息
     public static final String SQL_FIND_LIMIT = "SELECT *FROM EXPRESS LIMIT ?,?";
     //用于查询数据库中的所有快递信息
@@ -31,36 +31,26 @@ public class ExpressDaoImple implements BaseExpressDao {
     //根据录入人手机号，查询快递信息
     public static final String SQL_FIND_BY_SYSPHONE = "SELECT * FROM EXPRESS WHERE SYSPHONE=?";
     //录入快递
-    public static final String SQL_INSERT = "INSERT INTO EXPRESS (NUMBER,USERNAME,USERPHONE,COMPANY,CODE,INTIME,STATUS,SYSPHONE) VALUES(?,?,?,?,?,NOW(),0,?)";
+    public static final String SQL_INSERT = "INSERT INTO EXPRESS (NUMBER,USERNAME,USERPHONE,COMPANY,CODE,in_time,STATUS,SYSPHONE,LOCKER_ID,SEND_DISTRICT,RECEIVE_DISTRICT) VALUES(?,?,?,?,?,NOW(),0,?,?,?,?)";
     //修改快递
     public static final String SQL_UPDATE = "UPDATE EXPRESS SET NUMBER=?,USERNAME=?,COMPANY=?,STATUS=? WHERE ID=?";
+    //更新快递柜ID
+    public static final String SQL_UPDATE_LOCKER_ID = "UPDATE EXPRESS SET LOCKER_ID=? WHERE ID=?";
     //快递的状态码改变（取件）
-    public static final String SQL_UPDATE_STATUS = "UPDATE EXPRESS SET STATUS=1,OUTTIME=NOW(),CODE=NULL WHERE CODE=?";
+    public static final String SQL_UPDATE_STATUS = "UPDATE EXPRESS SET STATUS=1,out_time=NOW(),CODE=NULL WHERE CODE=?";
     //快递的删除
     public static final String SQL_DELETE = "DELETE FROM EXPRESS WHERE ID=?";
     private static final String SQL_FIND_BY_USERPHONE_AND_STATUS = "SELECT * FROM EXPRESS WHERE USERPHONE=? AND STATUS=?";
 
-
-    /**
-     * 用于查询数据库中的全部快递（总数+新增），待取件快递（总数+新增）
-     *
-     * @return [{size：总数，day：新增}，{size:总数，day:新增}]
-     */
     @Override
     public List<Map<String, Integer>> console() {
-
         List<Map<String, Integer>> data = new ArrayList<>();
-        //1.获取数据库的连接
         Connection connection = DruidUtil.getConnection();
-        //2.预编译SQL语句
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
         try {
             preparedStatement = connection.prepareStatement(SQL_CONSOLE);
-            //3.填充参数（可选）
-            //4.执行SQL语句
             resultSet = preparedStatement.executeQuery();
-            //5.获取执行结果
             if(resultSet.next()){
                 int data1_size = resultSet.getInt("data1_size");
                 int data1_day = resultSet.getInt("data1_day");
@@ -75,167 +65,140 @@ public class ExpressDaoImple implements BaseExpressDao {
                 data.add(data1);
                 data.add(data2);
             }
-
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }finally {
-            //6.释放资源
             DruidUtil.close(connection,preparedStatement,resultSet);
         }
         return data;
     }
 
-    /**
-     * 用于查询所有快递
-     *
-     * @param limit      是否分页的标记，true表示分页，false表示查询所有快递
-     * @param offset     SQL语句的起始索引
-     * @param pageNumber 页查询的数量
-     * @return 快递的集合
-     */
     @Override
     public List<Express> findAll(boolean limit, int offset, int pageNumber) {
-
         List<Express> data = new ArrayList<>();
-        //1.获取数据库的连接
         Connection connection = DruidUtil.getConnection();
-        //2.预编译SQL语句
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
         try {
             if(limit){
                 preparedStatement = connection.prepareStatement(SQL_FIND_LIMIT);
-                //3.填充参数（可选）
                 preparedStatement.setInt(1,offset);
                 preparedStatement.setInt(2,pageNumber);
             }else{
                 preparedStatement = connection.prepareStatement(SQL_FIND_ALL);
             }
-            //4.执行SQL语句
             resultSet = preparedStatement.executeQuery();
-            //5.获取执行结果
             while(resultSet.next()){
-
                 int id = resultSet.getInt("id");
                 String number = resultSet.getString("number");
                 String username = resultSet.getString("username");
                 String userPhone = resultSet.getString("userPhone");
                 String company = resultSet.getString("company");
                 String code = resultSet.getString("code");
-                Timestamp inTime = resultSet.getTimestamp("inTime");
-                Timestamp outTime = resultSet.getTimestamp("outTime");
+                Timestamp inTime = resultSet.getTimestamp("in_time");
+                Timestamp outTime = resultSet.getTimestamp("out_time");
                 int status = resultSet.getInt("status");
                 String sysPhone = resultSet.getString("sysPhone");
                 Express express = new Express(id,number,username,userPhone,company,code,inTime,outTime,status,sysPhone);
                 data.add(express);
             }
-
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }finally {
-            //6.释放资源
             DruidUtil.close(connection,preparedStatement,resultSet);
         }
         return data;
     }
 
-    /**
-     * 根据快递单号，查询快递信息
-     *
-     * @param number 快递单号
-     * @return 查询的快递信息，单号不存在时，返回null
-     */
     @Override
     public Express findByNumber(String number) {
-        //1.获取数据库的连接
+        System.out.println("=== DAO层: 开始根据快递单号查询: '" + number + "' ===");
         Connection connection = DruidUtil.getConnection();
-        //2.预编译SQL语句
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
         try {
             preparedStatement = connection.prepareStatement(SQL_FIND_BY_NUMBER);
-            //3.填充参数（可选）
             preparedStatement.setString(1,number);
-            //4.执行SQL语句
+            System.out.println("=== DAO层: 执行SQL: " + SQL_FIND_BY_NUMBER + " 参数: " + number + " ===");
             resultSet = preparedStatement.executeQuery();
-            //5.获取执行结果
             if(resultSet.next()){
                 int id = resultSet.getInt("id");
                 String username = resultSet.getString("username");
                 String userPhone = resultSet.getString("userPhone");
                 String company = resultSet.getString("company");
                 String code = resultSet.getString("code");
-                Timestamp inTime = resultSet.getTimestamp("inTime");
-                Timestamp outTime = resultSet.getTimestamp("outTime");
+                Timestamp inTime = resultSet.getTimestamp("in_time");
+                Timestamp outTime = resultSet.getTimestamp("out_time");
                 int status = resultSet.getInt("status");
                 String sysPhone = resultSet.getString("sysPhone");
-                Express express = new Express(id,number,username,userPhone,company,code,inTime,outTime,status,sysPhone);
+                Integer lockerId = resultSet.getInt("locker_id");
+                if (resultSet.wasNull()) {
+                    lockerId = null;
+                }
+                String sendDistrict = resultSet.getString("send_district");
+                String receiveDistrict = resultSet.getString("receive_district");
+                Express express = new Express();
+                express.setId(id);
+                express.setNumber(number);
+                express.setUsername(username);
+                express.setUserPhone(userPhone);
+                express.setCompany(company);
+                express.setCode(code);
+                express.setInTime(inTime);
+                express.setOutTime(outTime);
+                express.setStatus(status);
+                express.setSysPhone(sysPhone);
+                express.setLockerId(lockerId);
+                express.setSendDistrict(sendDistrict);
+                express.setReceiveDistrict(receiveDistrict);
+                System.out.println("=== DAO层: 找到快递: ID=" + id + ", 状态=" + status + ", 取件码=" + code + ", 收货区域=" + receiveDistrict + " ===");
                 return express;
+            } else {
+                System.out.println("=== DAO层: 未找到快递单号: " + number + " ===");
             }
-
         } catch (SQLException throwables) {
+            System.err.println("=== DAO层: 查询出错 ===");
             throwables.printStackTrace();
         }finally {
-            //6.释放资源
             DruidUtil.close(connection,preparedStatement,resultSet);
         }
         return null;
     }
 
-    /**
-     * 根据取件码慢查询快递信息
-     *
-     * @param code 取件码
-     * @return 查询的快递信息，取件码不存在时返回null
-     */
     @Override
     public Express findByCode(String code) {
-        //1.获取数据库的连接
         Connection connection = DruidUtil.getConnection();
-        //2.预编译SQL语句
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
         try {
             preparedStatement = connection.prepareStatement(SQL_FIND_BY_CODE);
-            //3.填充参数（可选）
             preparedStatement.setString(1,code);
-            //4.执行SQL语句
             resultSet = preparedStatement.executeQuery();
-            //5.获取执行结果
             if(resultSet.next()){
                 int id = resultSet.getInt("id");
                 String number = resultSet.getString("number");
                 String username = resultSet.getString("username");
                 String userPhone = resultSet.getString("userPhone");
                 String company = resultSet.getString("company");
-                Timestamp inTime = resultSet.getTimestamp("inTime");
-                Timestamp outTime = resultSet.getTimestamp("outTime");
+                Timestamp inTime = resultSet.getTimestamp("in_time");
+                Timestamp outTime = resultSet.getTimestamp("out_time");
                 int status = resultSet.getInt("status");
                 String sysPhone = resultSet.getString("sysPhone");
                 Express express = new Express(id,number,username,userPhone,company,code,inTime,outTime,status,sysPhone);
                 return express;
             }
-
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }finally {
-            //6.释放资源
             DruidUtil.close(connection,preparedStatement,resultSet);
         }
         return null;
     }
 
-    /**
-     * 根据用户手机号码查询快递信息
-     *
-     * @param userPhone 手机号码
-     * @return 查询的快递信息列表
-     */
     @Override
     public List<Express> findByUserPhone(String userPhone) {
         List<Express> data = new ArrayList<>();
         System.out.println("=== DAO层: 开始查询用户手机号: '" + userPhone + "' ===");
-
         Connection connection = DruidUtil.getConnection();
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
@@ -243,7 +206,6 @@ public class ExpressDaoImple implements BaseExpressDao {
             preparedStatement = connection.prepareStatement(SQL_FIND_BY_USERPHONE);
             preparedStatement.setString(1, userPhone);
             System.out.println("=== DAO层: 执行SQL: " + SQL_FIND_BY_USERPHONE + " 参数: " + userPhone + " ===");
-
             resultSet = preparedStatement.executeQuery();
             int count = 0;
             while(resultSet.next()){
@@ -253,17 +215,15 @@ public class ExpressDaoImple implements BaseExpressDao {
                 String username = resultSet.getString("username");
                 String company = resultSet.getString("company");
                 String code = resultSet.getString("code");
-                Timestamp inTime = resultSet.getTimestamp("inTime");
-                Timestamp outTime = resultSet.getTimestamp("outTime");
+                Timestamp inTime = resultSet.getTimestamp("in_time");
+                Timestamp outTime = resultSet.getTimestamp("out_time");
                 int status = resultSet.getInt("status");
                 String sysPhone = resultSet.getString("sysPhone");
                 Express express = new Express(id,number,username,userPhone,company,code,inTime,outTime,status,sysPhone);
                 data.add(express);
-
                 System.out.println("=== DAO层: 找到快递 " + count + ": ID=" + id + ", 单号=" + number + ", 状态=" + status + " ===");
             }
             System.out.println("=== DAO层: 查询完成，共找到 " + count + " 条记录 ===");
-
         } catch (SQLException throwables) {
             System.err.println("=== DAO层: 查询出错 ===");
             throwables.printStackTrace();
@@ -273,37 +233,25 @@ public class ExpressDaoImple implements BaseExpressDao {
         return data;
     }
 
-    /**
-     * 根据用户手机号码查询快递信息
-     *
-     * @param userPhone 手机号码
-     * @param status
-     * @return 查询的快递信息列表
-     */
     @Override
     public List<Express> findByUserPhoneAndStatus(String userPhone, int status) {
         List<Express> data = new ArrayList<>();
-        //1.获取数据库的连接
         Connection connection = DruidUtil.getConnection();
-        //2.预编译SQL语句
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
         try {
             preparedStatement = connection.prepareStatement(SQL_FIND_BY_USERPHONE_AND_STATUS);
-            //3.填充参数（可选）
             preparedStatement.setString(1,userPhone);
             preparedStatement.setInt(2,status);
-            //4.执行SQL语句
             resultSet = preparedStatement.executeQuery();
-            //5.获取执行结果
             while(resultSet.next()){
                 int id = resultSet.getInt("id");
                 String number = resultSet.getString("number");
                 String username = resultSet.getString("username");
                 String company = resultSet.getString("company");
                 String code = resultSet.getString("code");
-                Timestamp inTime = resultSet.getTimestamp("inTime");
-                Timestamp outTime = resultSet.getTimestamp("outTime");
+                Timestamp inTime = resultSet.getTimestamp("in_time");
+                Timestamp outTime = resultSet.getTimestamp("out_time");
                 String sysPhone = resultSet.getString("sysPhone");
                 Express express = new Express(id,number,username,userPhone,company,code,inTime,outTime,status,sysPhone);
                 data.add(express);
@@ -311,33 +259,21 @@ public class ExpressDaoImple implements BaseExpressDao {
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }finally {
-            //6.释放资源
             DruidUtil.close(connection,preparedStatement,resultSet);
         }
         return data;
     }
 
-    /**
-     * 根据录入人的手机号，查询录入的所有记录
-     *
-     * @param sysPhone 手机号码
-     * @return 查询的快递信息列表
-     */
     @Override
     public List<Express> findBySysPhone(String sysPhone) {
         List<Express> data = new ArrayList<>();
-        //1.获取数据库的连接
         Connection connection = DruidUtil.getConnection();
-        //2.预编译SQL语句
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
         try {
             preparedStatement = connection.prepareStatement(SQL_FIND_BY_SYSPHONE);
-            //3.填充参数（可选）
             preparedStatement.setString(1,sysPhone);
-            //4.执行SQL语句
             resultSet = preparedStatement.executeQuery();
-            //5.获取执行结果
             while(resultSet.next()){
                 int id = resultSet.getInt("id");
                 String number = resultSet.getString("number");
@@ -345,147 +281,237 @@ public class ExpressDaoImple implements BaseExpressDao {
                 String userPhone = resultSet.getString("userPhone");
                 String company = resultSet.getString("company");
                 String code = resultSet.getString("code");
-                Timestamp inTime = resultSet.getTimestamp("inTime");
-                Timestamp outTime = resultSet.getTimestamp("outTime");
+                Timestamp inTime = resultSet.getTimestamp("in_time");
+                Timestamp outTime = resultSet.getTimestamp("out_time");
                 int status = resultSet.getInt("status");
                 Express express = new Express(id,number,username,userPhone,company,code,inTime,outTime,status,sysPhone);
                 data.add(express);
             }
-
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }finally {
-            //6.释放资源
             DruidUtil.close(connection,preparedStatement,resultSet);
         }
         return data;
     }
 
-    /**
-     * 快递的录入
-     *INSERT INTO EXPRESS (NUMBER,USERNAME,USERPHONE,COMPANY,CODE,INTIME,STATUS,SYSPHONE) VALUES(?,?,?,?,?,NOW(),0,?)
-     * @param express 要录入的快递对象
-     * @return 录入的结果，true表示成功，false表示失败
-     */
     @Override
     public boolean insert(Express express) throws DuplicateCodeException{
-        //1.获取数据库连接
         Connection connection = DruidUtil.getConnection();
-        //2.预编译SQL语句
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = connection.prepareStatement(SQL_INSERT);
-            //3.填充参数
             preparedStatement.setString(1,express.getNumber());
             preparedStatement.setString(2,express.getUsername());
             preparedStatement.setString(3,express.getUserPhone());
             preparedStatement.setString(4,express.getCompany());
             preparedStatement.setString(5,express.getCode());
             preparedStatement.setString(6,express.getSysPhone());
-            //4.执行SQL语句，获取执行结果
-            return preparedStatement.executeUpdate()>0?true:false;
+            if (express.getLockerId() != null) {
+                preparedStatement.setInt(7, express.getLockerId());
+            } else {
+                preparedStatement.setNull(7, java.sql.Types.INTEGER);
+            }
+            preparedStatement.setString(8, express.getSendDistrict());
+            preparedStatement.setString(9, express.getReceiveDistrict());
+            System.out.println("=== DAO层: 执行SQL: " + SQL_INSERT);
+            System.out.println("=== DAO层: 参数: number=" + express.getNumber() + 
+                ", username=" + express.getUsername() + 
+                ", userPhone=" + express.getUserPhone() + 
+                ", company=" + express.getCompany() + 
+                ", code=" + express.getCode() + 
+                ", sysPhone=" + express.getSysPhone() + 
+                ", lockerId=" + express.getLockerId() + 
+                ", sendDistrict=" + express.getSendDistrict() + 
+                ", receiveDistrict=" + express.getReceiveDistrict());
+            int result = preparedStatement.executeUpdate();
+            System.out.println("=== DAO层: 执行结果: " + result + " ===");
+            return result > 0;
         } catch (SQLException throwables) {
-
-            System.out.println(throwables.getMessage());
+            System.err.println("=== DAO层: SQL执行出错 ===");
+            System.err.println("错误信息: " + throwables.getMessage());
+            System.err.println("SQL状态: " + throwables.getSQLState());
+            System.err.println("错误代码: " + throwables.getErrorCode());
+            System.err.println("SQL语句: " + SQL_INSERT);
+            System.err.println("参数详情: number=" + express.getNumber() + 
+                ", username=" + express.getUsername() + 
+                ", userPhone=" + express.getUserPhone() + 
+                ", company=" + express.getCompany() + 
+                ", code=" + express.getCode() + 
+                ", sysPhone=" + express.getSysPhone() + 
+                ", lockerId=" + express.getLockerId() + 
+                ", sendDistrict=" + express.getSendDistrict() + 
+                ", receiveDistrict=" + express.getReceiveDistrict());
+            throwables.printStackTrace();
             if(throwables.getMessage().endsWith("for key 'express.code'")){
-                //是因为取件码重复，而出现了异常
                 DuplicateCodeException e = new DuplicateCodeException(throwables.getMessage());
                 throw e;
-            }else{
-                throwables.printStackTrace();
             }
         }finally {
-            //5.释放资源
             DruidUtil.close(connection,preparedStatement,null);
         }
-            return false;
-
+        return false;
     }
 
-    /**
-     * 快递的修改
-     *UPDATE EXPRESS SET NUMBER=?,USERNAME=?,COMPANY=?,STATUS=? WHERE ID=?
-     * @param id         要修改的快递id
-     * @param newExpress 新的快递对象（number，company，username，userPhone）
-     * @return 修改的结果，true表示成功，false表示失败
-     */
     @Override
     public boolean update(int id, Express newExpress) {
-        //1.获取数据库连接
         Connection connection = DruidUtil.getConnection();
-        //2.预编译SQL语句
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = connection.prepareStatement(SQL_UPDATE);
-            //3.填充参数
             preparedStatement.setString(1,newExpress.getNumber());
             preparedStatement.setString(2,newExpress.getUsername());
             preparedStatement.setString(3,newExpress.getCompany());
             preparedStatement.setInt(4,newExpress.getStatus());
             preparedStatement.setInt(5,id);
-            //4.执行SQL语句，获取执行结果
             return preparedStatement.executeUpdate()>0?true:false;
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }finally {
-            //5.释放资源
             DruidUtil.close(connection,preparedStatement,null);
         }
-
         return false;
     }
 
-    /**
-     * 更改快递的状态为1，表示取件完成
-     *
-     * @param code 要修改的快递单号
-     * @return 修改的结果，true表示成功，false表示失败
-     */
     @Override
     public boolean updateStatus(String code) {
-        //1.获取数据库连接
         Connection connection = DruidUtil.getConnection();
-        //2.预编译SQL语句
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = connection.prepareStatement(SQL_UPDATE_STATUS);
-            //3.填充参数
             preparedStatement.setString(1,code);
-            //4.执行SQL语句，获取执行结果
             return preparedStatement.executeUpdate()>0?true:false;
         } catch (SQLException throwables) {
             throwables.printStackTrace();
         }finally {
-            //5.释放资源
             DruidUtil.close(connection,preparedStatement,null);
         }
         return false;
     }
 
-    /**
-     * 根据id，删除单个快递信息
-     *
-     * @param id 要删除的快递的id
-     * @return 删除的结果，true表示成功，false表示失败
-     */
     @Override
-    public boolean delete(int id) {
-        //1.获取数据库连接
+    public Integer getLockerIdByCode(String code) {
+        String sql = "SELECT locker_id FROM express WHERE code=?";
         Connection connection = DruidUtil.getConnection();
-        //2.预编译SQL语句
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        
+        try {
+            pstmt = connection.prepareStatement(sql);
+            pstmt.setString(1, code);
+            rs = pstmt.executeQuery();
+            
+            if (rs.next()) {
+                Integer lockerId = rs.getInt("locker_id");
+                if (rs.wasNull()) {
+                    return null;
+                }
+                return lockerId;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            DruidUtil.close(connection, pstmt, rs);
+        }
+        return null;
+    }
+
+    @Override
+    public boolean deleteByCode(String code) {
+        Connection connection = DruidUtil.getConnection();
         PreparedStatement preparedStatement = null;
         try {
             preparedStatement = connection.prepareStatement(SQL_DELETE);
-            //3.填充参数
-            preparedStatement.setInt(1,id);
-            //4.执行SQL语句，获取执行结果
-            return preparedStatement.executeUpdate()>0?true:false;
+            preparedStatement.setString(1, code);
+            return preparedStatement.executeUpdate() > 0;
         } catch (SQLException throwables) {
             throwables.printStackTrace();
-        }finally {
-            //5.释放资源
-            DruidUtil.close(connection,preparedStatement,null);
+        } finally {
+            DruidUtil.close(connection, preparedStatement, null);
         }
         return false;
+    }
+
+    @Override
+    public boolean delete(int id) {
+        Connection connection = DruidUtil.getConnection();
+        PreparedStatement preparedStatement = null;
+        try {
+            preparedStatement = connection.prepareStatement(SQL_DELETE);
+            preparedStatement.setInt(1, id);
+            return preparedStatement.executeUpdate() > 0;
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        } finally {
+            DruidUtil.close(connection, preparedStatement, null);
+        }
+        return false;
+    }
+
+    @Override
+    public boolean updateLockerId(int id, Integer lockerId) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        
+        try {
+            conn = DruidUtil.getConnection();
+            String sql = "UPDATE express SET locker_id = ? WHERE id = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setObject(1, lockerId);
+            pstmt.setInt(2, id);
+            
+            int rows = pstmt.executeUpdate();
+            System.out.println("=== DAO层: 更新快递柜ID结果 - 影响行数: " + rows + " ===");
+            return rows > 0;
+            
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.err.println("=== DAO层: 更新快递柜ID失败 ===");
+            return false;
+        } finally {
+            DruidUtil.close(conn, pstmt, null);
+        }
+    }
+
+    @Override
+    public List<Map<String, Object>> getRegionStats() {
+        List<Map<String, Object>> data = new ArrayList<>();
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DruidUtil.getConnection();
+            
+            // 统计每个区域的快递数量（包括发送和接收区域）
+            String sql = "SELECT " +
+                    "CASE " +
+                    "   WHEN send_district IS NOT NULL AND send_district != '' THEN send_district " +
+                    "   WHEN receive_district IS NOT NULL AND receive_district != '' THEN receive_district " +
+                    "   ELSE '未知区域' " +
+                    "END AS district, " +
+                    "COUNT(*) AS count " +
+                    "FROM express " +
+                    "WHERE status = 0 " + // 只统计未取件的快递
+                    "GROUP BY district " +
+                    "ORDER BY count DESC";
+
+            pstmt = conn.prepareStatement(sql);
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("name", rs.getString("district"));
+                map.put("value", rs.getInt("count"));
+                data.add(map);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            DruidUtil.close(conn, pstmt, rs);
+        }
+
+        return data;
     }
 }

@@ -52,6 +52,54 @@
                     </div>
                 </div>
                 <div class="layui-form-item">
+                    <label class="layui-form-label">发出地区</label>
+                    <div class="layui-input-block">
+                        <select name="send_district" lay-verify="required" lay-search>
+                            <option value="">请选择发出地区</option>
+                            <option value="黄浦区">黄浦区</option>
+                            <option value="徐汇区">徐汇区</option>
+                            <option value="长宁区">长宁区</option>
+                            <option value="静安区">静安区</option>
+                            <option value="普陀区">普陀区</option>
+                            <option value="虹口区">虹口区</option>
+                            <option value="杨浦区">杨浦区</option>
+                            <option value="闵行区">闵行区</option>
+                            <option value="宝山区">宝山区</option>
+                            <option value="嘉定区">嘉定区</option>
+                            <option value="浦东新区">浦东新区</option>
+                            <option value="金山区">金山区</option>
+                            <option value="松江区">松江区</option>
+                            <option value="青浦区">青浦区</option>
+                            <option value="奉贤区">奉贤区</option>
+                            <option value="崇明区">崇明区</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label">收货地区</label>
+                    <div class="layui-input-block">
+                        <select name="receive_district" lay-verify="required" lay-search>
+                            <option value="">请选择收货地区</option>
+                            <option value="黄浦区">黄浦区</option>
+                            <option value="徐汇区">徐汇区</option>
+                            <option value="长宁区">长宁区</option>
+                            <option value="静安区">静安区</option>
+                            <option value="普陀区">普陀区</option>
+                            <option value="虹口区">虹口区</option>
+                            <option value="杨浦区">杨浦区</option>
+                            <option value="闵行区">闵行区</option>
+                            <option value="宝山区">宝山区</option>
+                            <option value="嘉定区">嘉定区</option>
+                            <option value="浦东新区">浦东新区</option>
+                            <option value="金山区">金山区</option>
+                            <option value="松江区">松江区</option>
+                            <option value="青浦区">青浦区</option>
+                            <option value="奉贤区">奉贤区</option>
+                            <option value="崇明区">崇明区</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-form-item">
                     <div class="layui-input-block">
                         <button class="layui-btn layui-btn-blue" lay-submit lay-filter="formDemo">立即提交</button>
                         <button type="reset" class="layui-btn layui-btn-primary">重置</button>
@@ -74,11 +122,11 @@
                 shade: [0.1,'#fff']
             });
 
-            // 发送AJAX请求
+            // 发送AJAX请求，确保UTF-8编码
             fetch('/express/insert.do', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
                 },
                 body: new URLSearchParams(data.field)
             })

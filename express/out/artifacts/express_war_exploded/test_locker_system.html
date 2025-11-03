@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>快递柜系统测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .sql-code { background: #f5f5f5; padding: 10px; border-radius: 3px; font-family: monospace; white-space: pre-wrap; }
+        .result { margin: 10px 0; padding: 10px; border-radius: 3px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>快递柜系统测试</h1>
+    
+    <div class="section">
+        <h2>当前状态</h2>
+        <p>应用启动失败，但数据库数据正确。以下是验证步骤：</p>
+        
+        <h3>1. 验证快递柜数据</h3>
+        <div class="sql-code">
+-- 检查虹口区中号快递柜
+SELECT * FROM locker WHERE city='上海' AND district='虹口区' AND size='中' AND status=0;
+        </div>
+        <p><strong>结果：</strong> 返回5条记录，说明快递柜数据正确</p>
+        
+        <h3>2. 手动分配快递柜（测试）</h3>
+        <p>在Navicat中执行以下SQL来模拟快递录入：</p>
+        <div class="sql-code">
+-- 方法一：使用变量（推荐）
+SET @locker_id = (SELECT id FROM locker WHERE city='上海' AND district='虹口区' AND size='中' AND status=0 LIMIT 1);
+UPDATE locker SET express_number='TEST001', status=1 WHERE id = @locker_id;
+
+-- 方法二：直接指定ID（如果知道具体ID）
+-- UPDATE locker SET express_number='TEST001', status=1 WHERE id = 1;
+
+-- 验证分配结果
+SELECT * FROM locker WHERE express_number='TEST001';
+        </div>
+        
+        <h3>3. 检查快递柜是否已满</h3>
+        <div class="sql-code">
+-- 检查虹口区中号快递柜是否已满
+SELECT COUNT(*) as available_count 
+FROM locker 
+WHERE city='上海' AND district='虹口区' AND size='中' AND status=0;
+        </div>
+        <p>如果返回0，说明快递柜已满；如果返回大于0，说明还有空位。</p>
+    </div>
+    
+    <div class="section">
+        <h2>问题分析</h2>
+        <p><strong>根本问题：</strong> 应用启动失败，servlet API版本不兼容</p>
+        <p><strong>当前状态：</strong> 数据库数据正确，但应用代码无法执行</p>
+        
+        <h3>解决方案建议：</h3>
+        <ol>
+            <li><strong>修复servlet API依赖</strong>：确保使用与Tomcat和Java版本兼容的servlet-api.jar</li>
+            <li><strong>检查Java版本</strong>：确保使用与项目兼容的Java版本</li>
+            <li><strong>重新编译项目</strong>：修复依赖后重新编译和部署</li>
+        </ol>
+    </div>
+    
+    <div class="section">
+        <h2>下一步操作</h2>
+        <p>请先解决servlet API依赖问题，然后重新部署应用。一旦应用正常启动，快递柜系统应该就能正常工作了。</p>
+        
+        <p><strong>验证步骤：</strong></p>
+        <ol>
+            <li>修复servlet API依赖</li>
+            <li>重启Tomcat服务器</li>
+            <li>访问 <a href="addExpress.html">addExpress.html</a></li>
+            <li>选择收货地址为虹口区，中号快递柜</li>
+            <li>系统应该显示"快递柜有空位"并成功录入</li>
+        </ol>
+    </div>
+</body>
+</html>

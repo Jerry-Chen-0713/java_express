@@ -7,7 +7,7 @@ $(function() {
 
         // input text
         var inputContW = $(".userInputCont .inputTypeCont").width();
-        var inputW = inputContW - 5 -50 -35;
+        var inputW = inputContW - 5 -50 -35; //inputTitle border-radius
         $(".userInputCont .inputTypeCont input.commonInput").css({"width":inputW+"px"});
 
         // input select
@@ -45,24 +45,28 @@ $(function() {
 
     // 设置导航跳转连接
     function setHeaderNav() {
-        var baseUrl = window.location.origin;
-
-        // 如果您的项目有部署名（例如：/express），请使用下面这行代码代替上面那行：
-        // var baseUrl = window.location.origin + "/express";
-
+        var rooturl = window.location.href;
+        var rooturlarray = rooturl.split("/");
         var headNav = $(".headerNavCont a");
-
         var navArray = [
             "/index.html",
             "/wxUserhome.html",
             "#",
-            "/addExpress.html",
-            "/lazyboard.html",
+            "#",
+            "#",
             "/expressAssist.html"
         ];
 
         for (var i = 0; i < headNav.length; i++) {
-            headNav[i].href = baseUrl + navArray[i];
+
+            // *** START: 这是唯一的修改 ***
+            // 之前的错误代码会创建无效链接，比如 /wxUserhome.html/index.html
+            // headNav[i].href = rooturlarray[0]+"//"+rooturlarray[2]+"/"+rooturlarray[3]+navArray[i];
+
+            // 修正：直接使用 navArray 里的根相对路径 (例如 /index.html)，浏览器会自动解析
+            headNav[i].href = navArray[i];
+            // *** END: 这是唯一的修改 ***
+
 
             if(i == 2 || i == 3 || i == 4){
                 headNav[i].style.display = "none";

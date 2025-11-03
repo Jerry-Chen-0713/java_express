@@ -3,9 +3,6 @@ package cjy.bean;
 import java.sql.Timestamp;
 import java.util.Objects;
 
-/**
- * @author yemage
- */
 public class Express {
 
     private int id;
@@ -18,18 +15,23 @@ public class Express {
     private Timestamp outTime;
     private int status;
     private String sysPhone;
+    private Integer lockerId;  // 关联的快递柜ID
+    private String sendDistrict; // 发货区县
+    private String receiveDistrict; // 收货区县
+    private String routePath;  // 运输路径
+    private Double totalDistance; // 总距离
 
     @Override
     public boolean equals(Object o) {
         if (this == o) {return true;}
         if (o == null || getClass() != o.getClass()) {return false;}
         Express express = (Express) o;
-        return id == express.id && status == express.status && number.equals(express.number) && username.equals(express.username) && userPhone.equals(express.userPhone) && company.equals(express.company) && code.equals(express.code) && inTime.equals(express.inTime) && outTime.equals(express.outTime) && sysPhone.equals(express.sysPhone);
+        return id == express.id && status == express.status && number.equals(express.number) && username.equals(express.username) && userPhone.equals(express.userPhone) && company.equals(express.company) && code.equals(express.code) && inTime.equals(express.inTime) && outTime.equals(express.outTime) && sysPhone.equals(express.sysPhone) && Objects.equals(lockerId, express.lockerId) && Objects.equals(sendDistrict, express.sendDistrict) && Objects.equals(receiveDistrict, express.receiveDistrict) && Objects.equals(routePath, express.routePath) && Objects.equals(totalDistance, express.totalDistance);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, number, username, userPhone, company, code, inTime, outTime, status, sysPhone);
+        return Objects.hash(id, number, username, userPhone, company, code, inTime, outTime, status, sysPhone, lockerId, sendDistrict, receiveDistrict, routePath, totalDistance);
     }
 
     @Override
@@ -45,6 +47,11 @@ public class Express {
                 ", outTime=" + outTime +
                 ", status=" + status +
                 ", sysPhone='" + sysPhone + '\'' +
+                ", lockerId=" + lockerId +
+                ", sendDistrict='" + sendDistrict + '\'' +
+                ", receiveDistrict='" + receiveDistrict + '\'' +
+                ", routePath='" + routePath + '\'' +
+                ", totalDistance=" + totalDistance +
                 '}';
     }
 
@@ -79,6 +86,17 @@ public class Express {
         this.outTime = outTime;
         this.status = status;
         this.sysPhone = sysPhone;
+    }
+
+    public Express(String number, String username, String userPhone, String company, String sysPhone, Integer lockerId, String sendDistrict, String receiveDistrict) {
+        this.number = number;
+        this.username = username;
+        this.userPhone = userPhone;
+        this.company = company;
+        this.sysPhone = sysPhone;
+        this.lockerId = lockerId;
+        this.sendDistrict = sendDistrict;
+        this.receiveDistrict = receiveDistrict;
     }
 
     public int getId() {
@@ -160,4 +178,46 @@ public class Express {
     public void setSysPhone(String sysPhone) {
         this.sysPhone = sysPhone;
     }
+
+    public Integer getLockerId() {
+        return lockerId;
+    }
+
+    public void setLockerId(Integer lockerId) {
+        this.lockerId = lockerId;
+    }
+
+
+    public String getSendDistrict() {
+        return sendDistrict;
+    }
+
+    public void setSendDistrict(String sendDistrict) {
+        this.sendDistrict = sendDistrict;
+    }
+
+    public String getReceiveDistrict() {
+        return receiveDistrict;
+    }
+
+    public void setReceiveDistrict(String receiveDistrict) {
+        this.receiveDistrict = receiveDistrict;
+    }
+
+    public String getRoutePath() {
+        return routePath;
+    }
+
+    public void setRoutePath(String routePath) {
+        this.routePath = routePath;
+    }
+
+    public Double getTotalDistance() {
+        return totalDistance;
+    }
+
+    public void setTotalDistance(Double totalDistance) {
+        this.totalDistance = totalDistance;
+    }
+
 }

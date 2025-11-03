@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>初始化快递柜数据</title>
+    <script src="js/jquery.min.js"></script>
+</head>
+<body>
+    <h1>初始化快递柜数据</h1>
+    <button id="initBtn">初始化快递柜数据</button>
+    <div id="result"></div>
+    
+    <script>
+        $(document).ready(function() {
+            $('#initBtn').click(function() {
+                $.ajax({
+                    url: '/express/initLockers.do',
+                    type: 'GET',
+                    success: function(response) {
+                        $('#result').html('<p style="color: green;">初始化成功: ' + response.result + '</p>');
+                    },
+                    error: function(xhr, status, error) {
+                        $('#result').html('<p style="color: red;">初始化失败: ' + error + '</p>');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -15,7 +15,7 @@ import java.util.Map;
  */
 public class ExpressService{
 
-    private static BaseExpressDao expressDao = new ExpressDaoImple();
+    private static BaseExpressDao dao = new ExpressDaoImple();
 
     /**
      * 用于查询数据库中的全部快递（总数+新增），待取件快递（总数+新增）
@@ -25,7 +25,7 @@ public class ExpressService{
 
     public static List<Map<String, Integer>> console() {
 
-        return expressDao.console();
+        return dao.console();
     }
 
     /**
@@ -38,7 +38,7 @@ public class ExpressService{
      */
 
     public static List<Express> findAll(boolean limit, int offset, int pageNumber) {
-        return expressDao.findAll(limit,offset,pageNumber);
+        return dao.findAll(limit,offset,pageNumber);
     }
 
     /**
@@ -49,7 +49,7 @@ public class ExpressService{
      */
 
     public static Express findByNumber(String number) {
-        return expressDao.findByNumber(number);
+        return dao.findByNumber(number);
     }
 
     /**
@@ -60,7 +60,7 @@ public class ExpressService{
      */
 
     public static Express findByCode(String code) {
-        return expressDao.findByCode(code);
+        return dao.findByCode(code);
     }
 
     /**
@@ -71,19 +71,19 @@ public class ExpressService{
      */
 
     public static List<Express> findByUserPhone(String userPhone) {
-        return expressDao.findByUserPhone(userPhone);
+        return dao.findByUserPhone(userPhone);
     }
 
     /**
-     * 根据用户手机号码查询快递信息
+     * 根据用户手机号码和状态查询快递信息
      *
      * @param userPhone 手机号码
-     * @param status
+     * @param status 状态
      * @return 查询的快递信息列表
      */
 
-    public static List<Express> findByUserPhoneAndStatus(String userPhone,int status) {
-        return expressDao.findByUserPhoneAndStatus(userPhone,status);
+    public static List<Express> findByUserPhoneAndStatus(String userPhone, int status) {
+        return dao.findByUserPhoneAndStatus(userPhone, status);
     }
 
     /**
@@ -94,7 +94,7 @@ public class ExpressService{
      */
 
     public static List<Express> findBySysPhone(String sysPhone) {
-        return expressDao.findBySysPhone(sysPhone);
+        return dao.findBySysPhone(sysPhone);
     }
 
     /**
@@ -104,18 +104,32 @@ public class ExpressService{
      * @return 录入的结果，true表示成功，false表示失败
      */
 
-    public static boolean insert(Express express){
-        //1.生成取件码
-        express.setCode(RandomUtil.getCode() + "");
+    public static boolean insert(Express express) throws DuplicateCodeException {
+        return dao.insert(express);
+    }
+
+    /**
+     * 快递的录入
+     *
+     * @param express 要录入的快递对象
+     * @return 录入的结果，true表示成功，false表示失败
+     */
+
+    public static boolean insert2(Express express) {
         try {
-            boolean flag = expressDao.insert(express);
+            boolean flag = dao.insert(express);
             if(flag){
-                //录入成功
+                //发送短信
                 SMSUtil.send(express.getUserPhone(),express.getCode());
             }
             return flag;
         } catch (DuplicateCodeException e) {
-            return insert(express);
+            try {
+                return insert(express);
+            } catch (DuplicateCodeException e2) {
+                e2.printStackTrace();
+                return false;
+            }
         }
     }
 
@@ -129,12 +143,17 @@ public class ExpressService{
 
     public static boolean update(int id, Express newExpress) {
         if(newExpress.getUserPhone() != null){
-            expressDao.delete(id);
-           return insert(newExpress);
+            dao.delete(id);
+            try {
+                return insert(newExpress);
+            } catch (DuplicateCodeException e) {
+                e.printStackTrace();
+                return false;
+            }
 
         }else{
-            boolean update = expressDao.update(id, newExpress);
-            Express e = expressDao.findByNumber(newExpress.getNumber());
+            boolean update = dao.update(id, newExpress);
+            Express e = dao.findByNumber(newExpress.getNumber());
             if(newExpress.getStatus() == 1){
                 updateStatus(e.getCode());
             }
@@ -151,7 +170,74 @@ public class ExpressService{
      */
 
     public static boolean updateStatus(String code) {
-        return expressDao.updateStatus(code);
+        return dao.updateStatus(code);
+    }
+
+    /**
+     * 根据取件码获取快递柜ID
+     *
+     * @param code 取件码
+     * @return 快递柜ID，如果不存在返回null
+     */
+    public static Integer getLockerIdByCode(String code) {
+        return dao.getLockerIdByCode(code);
+    }
+
+    /**
+     * 根据取件码删除快递数据
+     *
+     * @param code 取件码
+     * @return 删除的结果，true表示成功，false表示失败
+     */
+    public static boolean deleteByCode(String code) {
+        return dao.deleteByCode(code);
+    }
+
+    /**
+     * 取出快递并释放快递柜
+     *
+     * @param code 取件码
+     * @return 操作结果，true表示成功，false表示失败
+     */
+    public static boolean pickExpressAndReleaseLocker(String code) {
+        System.out.println("=== ExpressService: 开始取出快递并释放快递柜，取件码: " + code + " ===");
+        
+        try {
+            // 1. 获取快递柜ID
+            Integer lockerId = getLockerIdByCode(code);
+            System.out.println("=== ExpressService: 获取到的快递柜ID: " + lockerId + " ===");
+            
+            if (lockerId == null) {
+                System.err.println("=== ExpressService: 未找到对应的快递柜ID ===");
+                return false;
+            }
+            
+            // 2. 更新快递状态为已取出（status=1），保留所有数据
+            boolean updateResult = updateStatus(code);
+            System.out.println("=== ExpressService: 更新快递状态结果: " + updateResult + " ===");
+            
+            if (!updateResult) {
+                System.err.println("=== ExpressService: 更新快递状态失败 ===");
+                return false;
+            }
+            
+            // 3. 释放快递柜
+            boolean releaseResult = LockerService.releaseLocker(lockerId);
+            System.out.println("=== ExpressService: 释放快递柜结果: " + releaseResult + " ===");
+            
+            if (!releaseResult) {
+                System.err.println("=== ExpressService: 释放快递柜失败 ===");
+                return false;
+            }
+            
+            System.out.println("=== ExpressService: 取出快递并释放快递柜成功 ===");
+            return true;
+            
+        } catch (Exception e) {
+            System.err.println("=== ExpressService: 取出快递并释放快递柜过程中出现异常 ===");
+            e.printStackTrace();
+            return false;
+        }
     }
 
     /**
@@ -161,6 +247,28 @@ public class ExpressService{
      * @return 删除的结果，true表示成功，false表示失败
      */
     public static boolean delete(int id) {
-        return expressDao.delete(id);
+        return dao.delete(id);
+    }
+
+    /**
+     * 更新快递的柜子信息
+     *
+     * @param id 快递ID
+     * @param lockerId 快递柜ID
+     * @return 更新结果，true表示成功，false表示失败
+     */
+    public static boolean updateLockerId(int id, Integer lockerId) {
+        System.out.println("=== ExpressService: 更新快递柜ID - id=" + id + ", lockerId=" + lockerId + " ===");
+        // 直接调用DAO层的updateLockerId方法
+        return dao.updateLockerId(id, lockerId);
+    }
+
+    /**
+     * 获取快递区域统计数据
+     *
+     * @return 区域统计数据列表
+     */
+    public static List<Map<String, Object>> getRegionStats() {
+        return dao.getRegionStats();
     }
 }

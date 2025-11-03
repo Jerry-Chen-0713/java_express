@@ -107,7 +107,7 @@ public class UserController {
                 message.setStatus(-1);
                 message.setResult("手机号或密码错误");
                 return JSONUtil.toJSON(message);
-                }
+            }
             // 更新登录时间
             UserService.updateLoginTime(user.getId());
 
@@ -161,7 +161,7 @@ public class UserController {
 
             System.out.println("验证码验证成功");
 
-                // 验证码正确，查找用户
+            // 验证码正确，查找用户
             User user = UserService.findByUserPhone(userPhone);
             System.out.println("查找用户结果: " + user);
 

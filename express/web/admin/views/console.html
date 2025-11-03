@@ -20,7 +20,7 @@
                             <div class="meta">
                                 <span>用户人数</span>
                             </div>
-                            <div class="total">6666</div>
+                            <div id="userTotal" class="total">-</div>
                         </div>
                     </div>
                     <div class="chart-body">
@@ -30,7 +30,7 @@
                     <div class="chart-footer">
                         <div class="field">
                             <span>日注册量</span>
-                            <span>666</span>
+                            <span id="userToday">-</span>
                         </div>
                     </div>
                 </div>
@@ -117,7 +117,7 @@
                     </ul>
                     <div class="layui-tab-content">
                         <div class="layui-tab-item layui-show">
-                            <iframe src="map.html" style="width:100%;height:600px;"></iframe>
+                            <iframe src="express_map.html" style="width:100%;height:600px;"></iframe>
                         </div>
                     </div>
                 </div>
@@ -155,6 +155,19 @@
                     // 快递员数据结构: [{total:总数, todayNew:今日新增}]
                     $("#courierTotal").html(data.data[0].total);
                     $("#courierToday").html(data.data[0].todayNew);
+                }
+            },"JSON"
+        );
+
+        // 加载用户数据
+        $.post(
+            "/user/console.do",
+            null,
+            function (data){
+                if(data.status == 0){
+                    // 用户数据结构: [{total:总数, todayNew:今日新增}]
+                    $("#userTotal").html(data.data[0].total);
+                    $("#userToday").html(data.data[0].todayNew);
                 }
             },"JSON"
         );

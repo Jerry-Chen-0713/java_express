@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>快递柜数据初始化SQL</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .sql-code { background: #f5f5f5; padding: 15px; border-radius: 5px; font-family: monospace; white-space: pre-wrap; }
+        .note { color: #666; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>快递柜数据初始化SQL</h1>
+    
+    <div class="note">
+        <p>由于控制器可能存在编译问题，请直接在Navicat中执行以下SQL语句来初始化快递柜数据：</p>
+    </div>
+    
+    <div class="sql-code">
+-- 清空locker表（可选）
+-- DELETE FROM locker;
+
+-- 初始化快递柜数据
+INSERT INTO locker (express_number, city, district, size, status) VALUES
+-- 上海 - 黄浦区
+(NULL, '上海', '黄浦区', '大', 0),
+(NULL, '上海', '黄浦区', '大', 0),
+(NULL, '上海', '黄浦区', '大', 0),
+(NULL, '上海', '黄浦区', '大', 0),
+(NULL, '上海', '黄浦区', '大', 0),
+(NULL, '上海', '黄浦区', '中', 0),
+(NULL, '上海', '黄浦区', '中', 0),
+(NULL, '上海', '黄浦区', '中', 0),
+(NULL, '上海', '黄浦区', '中', 0),
+(NULL, '上海', '黄浦区', '中', 0),
+(NULL, '上海', '黄浦区', '小', 0),
+(NULL, '上海', '黄浦区', '小', 0),
+(NULL, '上海', '黄浦区', '小', 0),
+(NULL, '上海', '黄浦区', '小', 0),
+(NULL, '上海', '黄浦区', '小', 0),
+
+-- 上海 - 虹口区
+(NULL, '上海', '虹口区', '大', 0),
+(NULL, '上海', '虹口区', '大', 0),
+(NULL, '上海', '虹口区', '大', 0),
+(NULL, '上海', '虹口区', '大', 0),
+(NULL, '上海', '虹口区', '大', 0),
+(NULL, '上海', '虹口区', '中', 0),
+(NULL, '上海', '虹口区', '中', 0),
+(NULL, '上海', '虹口区', '中', 0),
+(NULL, '上海', '虹口区', '中', 0),
+(NULL, '上海', '虹口区', '中', 0),
+(NULL, '上海', '虹口区', '小', 0),
+(NULL, '上海', '虹口区', '小', 0),
+(NULL, '上海', '虹口区', '小', 0),
+(NULL, '上海', '虹口区', '小', 0),
+(NULL, '上海', '虹口区', '小', 0),
+
+-- 上海 - 其他区（可根据需要添加更多区域）
+(NULL, '上海', '徐汇区', '中', 0),
+(NULL, '上海', '徐汇区', '中', 0),
+(NULL, '上海', '徐汇区', '中', 0),
+(NULL, '上海', '徐汇区', '中', 0),
+(NULL, '上海', '徐汇区', '中', 0),
+(NULL, '上海', '长宁区', '中', 0),
+(NULL, '上海', '长宁区', '中', 0),
+(NULL, '上海', '长宁区', '中', 0),
+(NULL, '上海', '长宁区', '中', 0),
+(NULL, '上海', '长宁区', '中', 0),
+(NULL, '上海', '静安区', '中', 0),
+(NULL, '上海', '静安区', '中', 0),
+(NULL, '上海', '静安区', '中', 0),
+(NULL, '上海', '静安区', '中', 0),
+(NULL, '上海', '静安区', '中', 0),
+(NULL, '上海', '普陀区', '中', 0),
+(NULL, '上海', '普陀区', '中', 0),
+(NULL, '上海', '普陀区', '中', 0),
+(NULL, '上海', '普陀区', '中', 0),
+(NULL, '上海', '普陀区', '中', 0),
+(NULL, '上海', '杨浦区', '中', 0),
+(NULL, '上海', '杨浦区', '中', 0),
+(NULL, '上海', '杨浦区', '中', 0),
+(NULL, '上海', '杨浦区', '中', 0),
+(NULL, '上海', '杨浦区', '中', 0),
+(NULL, '上海', '闵行区', '中', 0),
+(NULL, '上海', '闵行区', '中', 0),
+(NULL, '上海', '闵行区', '中', 0),
+(NULL, '上海', '闵行区', '中', 0),
+(NULL, '上海', '闵行区', '中', 0),
+(NULL, '上海', '宝山区', '中', 0),
+(NULL, '上海', '宝山区', '中', 0),
+(NULL, '上海', '宝山区', '中', 0),
+(NULL, '上海', '宝山区', '中', 0),
+(NULL, '上海', '宝山区', '中', 0),
+(NULL, '上海', '嘉定区', '中', 0),
+(NULL, '上海', '嘉定区', '中', 0),
+(NULL, '上海', '嘉定区', '中', 0),
+(NULL, '上海', '嘉定区', '中', 0),
+(NULL, '上海', '嘉定区', '中', 0);
+
+-- 查询验证
+SELECT city, district, size, COUNT(*) as count, SUM(status) as used 
+FROM locker 
+GROUP BY city, district, size;
+    </div>
+    
+    <div class="note">
+        <p><strong>使用说明：</strong></p>
+        <ol>
+            <li>打开Navicat，连接到express数据库</li>
+            <li>新建查询窗口</li>
+            <li>复制上面的SQL语句并执行</li>
+            <li>执行最后的查询语句验证数据是否正确插入</li>
+            <li>然后访问 <a href="addExpress.html">addExpress.html</a> 测试快递录入功能</li>
+        </ol>
+    </div>
+</body>
+</html>

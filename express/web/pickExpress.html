@@ -62,11 +62,32 @@
 				}
 			});
 	}
-	//根据取件码，确认收货
+	//根据取件码，确认收货（旧版本，只更新状态）
 	function updateStatus(code,type){
 		var windowId = layer.load();
 		$.getJSON("/wx/updateStatus.do",{code:code},function (data) {
-			layer.msg(data.result);
+			layer.msg(data.result, {
+				time: 2000,
+				offset: '50%',
+				shade: 0.3
+			});
+			$("#expUserInfoCont").html("");
+			layer.close(windowId);
+			if(type == 0){
+				getExpress();
+			}
+
+		})
+	}
+
+	function pickExpress(code,type){
+		var windowId = layer.load();
+		$.getJSON("/wx/pickExpress.do",{code:code},function (data) {
+			layer.msg(data.result, {
+				time: 2000,
+				offset: '50%',
+				shade: 0.3
+			});
 			$("#expUserInfoCont").html("");
 			layer.close(windowId);
 			if(type == 0){
@@ -80,7 +101,11 @@
 		var code = $("#expPickUserId").val();
 		$.getJSON("/wx/findExpressByCode.do",{code:code},function (data) {
 			layer.close(windowId);
-			layer.msg(data.result);
+			layer.msg(data.result, {
+				time: 2000,
+				offset: '50%',
+				shade: 0.3
+			});
 			if(data.status == 0){
 				$("#expUserInfoCont").html("");
 				var express = data.data;
@@ -100,7 +125,7 @@
 						"\t\t\t\t</tr>\n" +
 						"\t\t\t</table>\n" +
 						"\t\t\t<div class=\"btns\">\n" +
-						"\t\t\t\t<button class=\"btn-success\" onclick=\"updateStatus('"+express.code+"',1)\">确认收货</button>\n" +
+						"\t\t\t\t<button class=\"btn-success\" onclick=\"pickExpress('"+express.code+"',1)\">确认收货</button>\n" +
 						"\t\t\t</div>\n" +
 						"\t\t</div>";
 				$("#expUserInfoCont").append($(item));
@@ -112,7 +137,11 @@
 		var windowId = layer.load();
 		$.getJSON("wx/userExpressList.do",{userPhone:userPhone},function (data) {
 			if(data.status == -1){
-				layer.msg("用户无快递",function() {});
+				layer.msg("用户无快递", {
+					time: 2000,
+					offset: '50%',
+					shade: 0.3
+				});
 			}else{
 				var list = data.data;
 				for(var i=0;i<list.length;i++){
@@ -132,7 +161,7 @@
 							"\t\t\t\t</tr>\n" +
 							"\t\t\t</table>\n" +
 							"\t\t\t<div class=\"btns\">\n" +
-							"\t\t\t\t<button class=\"btn-success\" onclick=\"updateStatus('"+list[i].code+"',0)\">确认收货</button>\n" +
+							"\t\t\t\t<button class=\"btn-success\" onclick=\"pickExpress('"+list[i].code+"',0)\">确认收货</button>\n" +
 					"\t\t\t</div>\n" +
 					"\t\t</div>";
 					$("#expUserInfoCont").append($(item));

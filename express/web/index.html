@@ -9,13 +9,12 @@
     <script src="js/jquery.min.js" type="text/javascript"></script>
     <script src="js/notice.js"  type="text/javascript"></script>
     <script src="js/common.js" type="text/javascript"></script>
-    <script src="https://cdn.bootcdn.net/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        /* 队友的功能：查询结果样式 */
+        /* 查询结果样式 */
         #query-result {
             margin: 20px auto;
             max-width: 600px;
-            display: none;
+            display: none; /* 默认隐藏 */
         }
         .query-table {
             width: 100%;
@@ -48,6 +47,8 @@
         .loading {
             color: #0078d7;
         }
+
+        /* 调整原有样式适应新功能 */
         .middle {
             margin-bottom: 20px;
         }
@@ -77,43 +78,6 @@
         .submBtn:hover {
             background-color: #005fa3;
         }
-
-        /* 我们的功能：二维码浮窗样式 */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .modal-content {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            animation: fadeIn 0.3s;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
-        }
-        .modal-content h3 {
-            margin-top: 0;
-            color: #333;
-        }
-        #qrcode-container {
-            width: 200px;
-            height: 200px;
-            margin: 20px auto;
-            border: 1px solid #eee;
-            padding: 5px;
-        }
     </style>
 </head>
 <body>
@@ -133,6 +97,7 @@
         </form>
     </div>
 
+    <!-- 查询结果区域 -->
     <div id="query-result"></div>
 
     <div class="funContdiv">
@@ -145,7 +110,7 @@
                 <p class="funIcon userFunColor2"></p>
                 <p class="funTxt">懒人排行</p>
             </div>
-            <div class="userFun" id="qrcode-btn">
+            <div class="userFun">
                 <p class="funIcon userFunColor3"></p>
                 <p class="funTxt">取货二维码</p>
             </div>
@@ -169,17 +134,8 @@
     </div>
 </div>
 
-<div id="qrCodeModal" class="modal-overlay">
-    <div class="modal-content">
-        <h3>我的取货码</h3>
-        <div id="qrcode-container"></div>
-        <p>请出示此码给快递员</p>
-    </div>
-</div>
-
-
 <script type="text/javascript">
-    // 队友的功能：快递查询功能
+    // 快递查询功能
     function renderTable(data) {
         var html = "<table class='query-table'><tr><th>快递单号</th><th>用户姓名</th><th>用户手机号</th><th>快递公司</th><th>状态</th><th>入库时间</th></tr>";
         data.forEach(function(item) {
@@ -196,7 +152,6 @@
         $("#query-result").html(html).show();
     }
 
-    // 队友的功能：执行查询
     function performSearch() {
         var keyword = $("#expressNum").val().trim();
         if (!keyword) {
@@ -227,44 +182,39 @@
         });
     }
 
+    // 原有功能代码
+
     var isUser;
     $(function(){
-        // 我们的功能：请求用户信息，用于隐藏“快递助手”
-        $.getJSON("/wx/userInfo.do",null,function (data) {
+        $.getJSON("/user/checkLogin.do",null,function (data) { // <-- 修正！
             if(data.status == 0){
                 isUser = true;
-                $("#userFun").hide();
+                //$("#userFun").hide();
             }
             else
                 isUser = false;
         });
 
-        // 队友的功能：查询按钮点击事件
+        // 修改查询按钮点击事件
         $(".submBtn").click(function(){
             performSearch();
         });
 
-        // 队友的功能：回车键查询
+        // 支持回车键查询
         $("#expressNum").keypress(function(e) {
             if (e.which === 13) {
                 performSearch();
-                e.preventDefault();
+                e.preventDefault(); // 阻止表单默认提交
             }
         });
 
         var pageContextVal = $("#PageContext").val();
-
-        // 我们的功能：修改后的通用点击事件
         $(".userFun").click(function(){
-            // 如果点击的是二维码按钮，则不执行这里的逻辑
-            if ($(this).is('#qrcode-btn')) {
-                return;
-            }
             var clickNum = $(this).index();
             switch(clickNum){
                 case(0): window.location.href= "wxUserhome.html"; break;
                 case(1): window.location.href= "lazyboard.html"; break;
-                // case(2) 由下面的 #qrcode-btn 事件处理
+                case(2): window.location.href= "personQRcode.html"; break;
                 case(3): window.location.href= "expressList.html"; break;
                 case(4): window.location.href= "expressAssist.html"; break;
                 case(5):
@@ -275,64 +225,6 @@
             }
         });
 
-        // 我们的功能：二维码按钮点击事件
-        $('#qrcode-btn').click(function() {
-            $('#qrcode-container').html(''); // 清空上次的二维码
-            $('#qrCodeModal').css('display', 'flex'); // 显示浮窗
-
-            // 第一个请求：让后端准备好二维码信息并存入session
-            $.ajax({
-                url: '/wx/createQRCode.do?type=user',
-                type: 'GET',
-                dataType: 'json',
-                success: function(res) {
-                    // 如果后端返回失败（如未登录），则弹窗提示并隐藏浮窗
-                    if (res.status !== 0) {
-                        alert(res.result || '准备二维码失败，请先登录');
-                        $('#qrCodeModal').hide();
-                        return;
-                    }
-
-                    // 第一个请求成功后，立即发起第二个请求获取二维码内容
-                    $.ajax({
-                        url: '/wx/qrcode.do',
-                        type: 'GET',
-                        dataType: 'json',
-                        success: function(response) {
-                            if(response && response.status === 0) {
-                                // 使用qrcode.js库生成二维码
-                                new QRCode(document.getElementById("qrcode-container"), {
-                                    text: response.result,
-                                    width: 200,
-                                    height: 200,
-                                    correctLevel: QRCode.CorrectLevel.H
-                                });
-                            } else {
-                                alert(response.result || '获取二维码失败');
-                                $('#qrCodeModal').hide();
-                            }
-                        },
-                        error: function() {
-                            alert('请求二维码数据失败');
-                            $('#qrCodeModal').hide();
-                        }
-                    });
-                },
-                error: function() {
-                    alert('准备二维码数据失败，请检查网络');
-                    $('#qrCodeModal').hide();
-                }
-            });
-        });
-
-        // 我们的功能：点击浮窗背景关闭
-        $('#qrCodeModal').click(function(e) {
-            if (e.target === this) {
-                $(this).hide();
-            }
-        });
-
-        // 队友的功能：页面初始化函数 (现在是完整版)
         var initFunc = function(){
             var windowH = $(document).height();
             var windowW = $(document).width();
@@ -359,11 +251,12 @@
             initFunc();
         });
 
-        // 队友的功能：input focus/blur (现在是完整版)
+        // input focus
         $(".middle .forminput input").focus(function(){
             $(".middle .forminput").css({"border":"1px solid rgba(31,114,255,.75)","box-shadow":"0 0 8px rgba(31,114,255,.5)"});
         });
 
+        // input blur
         $(".middle .forminput input").blur(function(){
             $(".middle .forminput").css({"border":"1px solid #333333","box-shadow":"none"});
         });
