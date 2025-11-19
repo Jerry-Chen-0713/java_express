@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>快件列表</title>
+	<link rel="stylesheet" type="text/css" href="../../css/reset.css"/>
+	<link rel="stylesheet" type="text/css" href="../../css/list.css"/>
+	<!-- 使用更稳定的CDN链接 -->
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.17.1/bootstrap-table.min.css" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+	<script src="/js/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.17.1/bootstrap-table.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.17.1/locale/bootstrap-table-zh-CN.min.js"></script>
+</head>
+	<body>
+		<table id="express_list"></table>
+		<script>
+			$(function (){
+				$("#express_list").bootstrapTable({
+					url:"/express/list.do",//数据地址
+					striped:true,//是否显示行间隔
+					pageNumber:1,//初始化加载第几页
+					pagination:true,//是否分页
+					sidePagination:"server",
+					pageSize:5,
+					pageList:[5,10,20],
+					showRefresh:true,
+					queryParams:function (params){
+						var temp = {
+							offset:params.offset,
+							pageNumber: params.limit
+						}
+						return temp;
+					},
+					columns:[
+						{
+							title:"编号",
+							field:"id",
+						},{
+							title:"快递编号",
+							field:"number",
+						},{
+							title:"收件人姓名",
+							field:"username",
+						},
+						{
+							title:"收件人手机号",
+							field:"userPhone",
+						},{
+							title:"快递公司",
+							field:"company",
+						},{
+							title:"取件码",
+							field:"code",
+						},{
+							title:"入库时间",
+							field:"inTime",
+						},{
+							title:"出库时间",
+							field:"outTime",
+						},{
+							title:"取件状态",
+							field:"status",
+						},{
+							title:"录入人手机号",
+							field:"sysPhone",
+						}
+					]
+				});
+			});
+		</script>
+	</body>
+</html>

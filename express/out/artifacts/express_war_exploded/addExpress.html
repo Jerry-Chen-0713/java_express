@@ -1,0 +1,479 @@
+web/addExpress
+<!DOCTYPE html>
+<html>
+<head>
+    <title>录入快递 -- 快件e栈服务平台</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+
+    <link href="css/normalize.css" type="text/css" rel="stylesheet" />
+    <link href="css/common.css" type="text/css" rel="stylesheet" />
+    <script src="js/jquery.min.js" type="text/javascript"></script>
+    <script src="js/common.js" type="text/javascript"></script>
+    <script src="js/notice.js" type="text/javascript"></script>
+    <script src="js/regexp.js" type="text/javascript"></script>
+    <script src="js/jweixin-1.2.0.js" type="text/javascript"></script>
+    <style type="text/css">
+        .content{
+            position: relative;
+        }
+        .expEnterCont{
+            padding-bottom: 20px;
+        }
+        .expEnterCont .expEnterIcon{
+            width: 20%;
+            margin: 0 auto;
+        }
+        .expEnterCont .expEnterIcon p{
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .submitBtn{
+            width: 90%;
+            margin: 0 auto;
+            text-align: center;
+            line-height: 46px;
+            border-radius: 23px;
+            background: #1f72ff;
+            color: #fff;
+            font-weight: bolder;
+        }
+
+        .stopvoicerecord{
+            width: 40%;
+            height: 50px;
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            display: none;
+            background:purple;
+        }
+
+        .stopvoicerecord{
+            position: absolute;
+            top: 0%;
+            left: 0%;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1001;
+            display: none;
+        }
+        .stopvoicerecord .voiceRecordCont{
+            width: 60%;
+            background: #fff;
+            border-radius: 8px;
+            position: absolute;
+            top: calc((100% - 216px) / 2);  /*30 + 110 +30 + 10 +36 == 216*/
+            left: 20%;
+            padding: 20px 0px 10px;
+        }
+        .stopvoicerecord .voiceRecordCont img{
+            display: block;
+            margin: 0 auto;
+            width: 110px;
+        }
+        .stopvoicerecord .voiceRecordCont .voiceRecordState{
+            margin: 0px;
+            text-align: center;
+            font-size: 14px;
+            color: #777777;
+            line-height: 30px;
+        }
+        .stopvoicerecord .voiceRecordCont #stopVoiceRecordBtn{
+            margin: 10px auto 0px;
+            width: 90%;
+            text-align: center;
+            line-height: 36px;
+            background: #3eb94e;
+            font-size: 14px;
+            color: #fff;
+            font-weight: bold;
+            border-radius: 18px;
+        }
+    </style>
+</head>
+<body>
+<div class="content">
+    <div class="headerNav">
+        <div class="headerNavTop"><div class="headerNavIcon headerNavIconOut"><span></span><span></span></div></div>
+        <div class="headerNavCont">
+            <a href="index.html">快递首页</a>
+            <a href="userhome.html">个人中心</a>
+            <a href="delivery.html">送货上门</a>
+            <a href="sendexpress.html">我要寄件</a>
+            <a href="lazyboard.html">懒人排行</a>
+            <a href="expassistant.html">快递助手</a>
+        </div>
+    </div>
+
+    <div class="expEnterCont">
+        <div class="expEnterIcon">
+            <img src="images/expentericon.png" width="100%">
+            <p>录入快递</p>
+        </div>
+        <div class="expEnterInput">
+            <input id="timestamp" type="hidden" value="${timestamp}" />
+            <input id="noncestr" type="hidden" value="${nonceStr}" />
+            <input id="signature" type="hidden" value="${signature}" />
+            <input id="appId" type="hidden" value="${appId}" />
+            <form>
+                <input id="PageContext" type="hidden" value="${pageContext.request.contextPath}" />
+                <input id="wxCode" type="hidden" value="${wxCode}" />
+                <div class="userInputCont">
+                    <div class="inputTypeCont">
+                        <div class="inputTitle">单号</div>
+                        <input type="text" id="expressId" class="commonInputFunc" name="expressId" placeholder="请输入快递单号...">
+                    </div>
+                    <div class="inputTypeCont">
+                        <div class="inputTitle">姓名</div>
+                        <input type="text" id="username" class="commonInputFunc" name="username" placeholder="请输入收件人姓名">
+                    </div>
+                    <div class="inputTypeCont">
+                        <div class="inputTitle">手机</div>
+                        <input type="text" id="phone" class="commonInputFunc" name="phone" placeholder="录入后短信自动提醒">
+                    </div>
+                    <div class="inputTypeCont">
+                        <div class="inputTitle">公司</div>
+                        <select id="company" name="company">
+                            <option selected="selected">顺丰速运</option>
+                            <option>申通快递</option>
+                            <option>圆通速递</option>
+                            <option>韵达快递</option>
+                            <option>中通快递</option>
+                            <!-- 其他快递公司选项 -->
+                        </select>
+                    </div>
+                    <div class="inputTypeCont">
+                        <div class="inputTitle">发货区域</div>
+                        <select id="sendDistrict" name="sendDistrict">
+                            <option value="">请选择发货区域</option>
+                            <option value="黄浦区">黄浦区</option>
+                            <option value="徐汇区">徐汇区</option>
+                            <option value="长宁区">长宁区</option>
+                            <option value="静安区">静安区</option>
+                            <option value="普陀区">普陀区</option>
+                            <option value="虹口区">虹口区</option>
+                            <option value="杨浦区">杨浦区</option>
+                            <option value="闵行区">闵行区</option>
+                            <option value="宝山区">宝山区</option>
+                            <option value="嘉定区">嘉定区</option>
+                            <option value="浦东新区">浦东新区</option>
+                            <option value="金山区">金山区</option>
+                            <option value="松江区">松江区</option>
+                            <option value="青浦区">青浦区</option>
+                            <option value="奉贤区">奉贤区</option>
+                            <option value="崇明区">崇明区</option>
+                        </select>
+                    </div>
+                    <div class="inputTypeCont">
+                        <div class="inputTitle">收货区域</div>
+                        <select id="receiveDistrict" name="receiveDistrict">
+                            <option value="">请选择收货区域</option>
+                            <option value="黄浦区">黄浦区</option>
+                            <option value="徐汇区">徐汇区</option>
+                            <option value="长宁区">长宁区</option>
+                            <option value="静安区">静安区</option>
+                            <option value="普陀区">普陀区</option>
+                            <option value="虹口区">虹口区</option>
+                            <option value="杨浦区">杨浦区</option>
+                            <option value="闵行区">闵行区</option>
+                            <option value="宝山区">宝山区</option>
+                            <option value="嘉定区">嘉定区</option>
+                            <option value="浦东新区">浦东新区</option>
+                            <option value="金山区">金山区</option>
+                            <option value="松江区">松江区</option>
+                            <option value="青浦区">青浦区</option>
+                            <option value="奉贤区">奉贤区</option>
+                            <option value="崇明区">崇明区</option>
+                        </select>
+                    </div>
+                </div>
+            </form>
+            <div class="submitBtn" id="submitBtn">录入信息</div>
+        </div>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+    // 上海各区数据（完整16个区）
+    var shanghaiDistricts = ['黄浦区', '徐汇区', '长宁区', '静安区', '普陀区', '虹口区', '杨浦区', '闵行区', '宝山区', '嘉定区', '浦东新区', '金山区', '松江区', '青浦区', '奉贤区', '崇明区'];
+
+    $(document).ready(function() {
+        // 显示最短路径信息
+        function showShortestPath(sendDistrict, receiveDistrict) {
+            if (sendDistrict && receiveDistrict) {
+                // 计算最短路径和距离
+                var result = calculateShortestPath(sendDistrict, receiveDistrict);
+                var routePath = result.path;
+                var distance = result.distance;
+                
+                // 显示路径信息
+                var pathInfo = '<div class="path-info" style="margin: 15px 0; padding: 10px; background: #f0f8ff; border-radius: 5px; border-left: 4px solid #1f72ff;">' +
+                               '<strong>最短路径：</strong>' + routePath + '<br>' +
+                               '<strong>总距离：</strong>' + distance + ' 公里</div>';
+                
+                // 移除已有的路径信息
+                $('.path-info').remove();
+                
+                // 在提交按钮前插入路径信息
+                $('#submitBtn').before(pathInfo);
+            }
+        }
+
+        // 计算最短路径（完整的Dijkstra算法）
+        function calculateShortestPath(start, end) {
+            // 上海各区之间的完整距离图
+            var graph = {
+                '黄浦区': {'徐汇区': 8.5, '长宁区': 7.2, '静安区': 3.5, '普陀区': 9.1, '虹口区': 4.2, '杨浦区': 8.7, '浦东新区': 5.0},
+                '徐汇区': {'黄浦区': 8.5, '长宁区': 5.3, '静安区': 7.8, '普陀区': 11.2, '闵行区': 8.7, '浦东新区': 12.0},
+                '长宁区': {'黄浦区': 7.2, '徐汇区': 5.3, '静安区': 6.5, '普陀区': 8.9, '闵行区': 10.2},
+                '静安区': {'黄浦区': 3.5, '徐汇区': 7.8, '长宁区': 6.5, '普陀区': 6.2, '虹口区': 7.8, '杨浦区': 11.3},
+                '普陀区': {'黄浦区': 9.1, '徐汇区': 11.2, '长宁区': 8.9, '静安区': 6.2, '虹口区': 12.5, '杨浦区': 16.1, '宝山区': 11.3, '嘉定区': 16.7, '青浦区': 20.0},
+                '虹口区': {'黄浦区': 4.2, '静安区': 7.8, '普陀区': 12.5, '杨浦区': 4.5, '宝山区': 13.8},
+                '杨浦区': {'黄浦区': 8.7, '静安区': 11.3, '普陀区': 16.1, '虹口区': 4.5, '宝山区': 9.7, '浦东新区': 12.0},
+                '闵行区': {'徐汇区': 8.7, '长宁区': 10.2, '宝山区': 24.3, '浦东新区': 15.0, '松江区': 18.0, '奉贤区': 25.0, '青浦区': 22.0},
+                '宝山区': {'普陀区': 11.3, '虹口区': 13.8, '杨浦区': 9.7, '闵行区': 24.3, '嘉定区': 18.2, '崇明区': 45.0},
+                '嘉定区': {'宝山区': 18.2, '普陀区': 16.7, '青浦区': 22.0},
+                '浦东新区': {'黄浦区': 5.0, '徐汇区': 12.0, '杨浦区': 12.0, '闵行区': 15.0, '奉贤区': 35.0, '崇明区': 50.0},
+                '金山区': {'松江区': 25.0, '奉贤区': 20.0},
+                '松江区': {'闵行区': 18.0, '金山区': 25.0, '青浦区': 15.0},
+                '青浦区': {'松江区': 15.0, '嘉定区': 22.0, '普陀区': 20.0, '闵行区': 22.0},
+                '奉贤区': {'浦东新区': 35.0, '金山区': 20.0, '闵行区': 25.0},
+                '崇明区': {'宝山区': 45.0, '浦东新区': 50.0}
+            };
+
+            // 如果起点和终点相同
+            if (start === end) {
+                return {
+                    path: start + ' → ' + end,
+                    distance: 0,
+                    passedDistricts: [start, end]
+                };
+            }
+
+            // Dijkstra算法实现
+            var distances = {};
+            var previous = {};
+            var nodes = new Set();
+            var path = [];
+            
+            // 初始化
+            for (var district in graph) {
+                distances[district] = Infinity;
+                previous[district] = null;
+                nodes.add(district);
+            }
+            distances[start] = 0;
+            
+            // 主循环
+            while (nodes.size > 0) {
+                // 找到距离最小的节点
+                var minNode = null;
+                for (var node of nodes) {
+                    if (minNode === null || distances[node] < distances[minNode]) {
+                        minNode = node;
+                    }
+                }
+                
+                // 如果找不到可达节点，退出
+                if (minNode === null || distances[minNode] === Infinity) {
+                    break;
+                }
+                
+                // 如果找到终点，提前退出
+                if (minNode === end) {
+                    break;
+                }
+                
+                nodes.delete(minNode);
+                
+                // 更新邻居节点的距离
+                if (graph[minNode]) {
+                    for (var neighbor in graph[minNode]) {
+                        var alt = distances[minNode] + graph[minNode][neighbor];
+                        if (alt < distances[neighbor]) {
+                            distances[neighbor] = alt;
+                            previous[neighbor] = minNode;
+                        }
+                    }
+                }
+            }
+            
+            // 构建路径
+            var current = end;
+            while (current !== null) {
+                path.unshift(current);
+                current = previous[current];
+            }
+            
+            // 如果找不到路径，使用直接距离
+            if (path.length === 1 || distances[end] === Infinity) {
+                var directDistance = findDirectDistance(start, end);
+                return {
+                    path: start + ' → ' + end,
+                    distance: directDistance,
+                    passedDistricts: [start, end]
+                };
+            }
+            
+            return {
+                path: path.join(' → '),
+                distance: Math.round(distances[end] * 10) / 10,
+                passedDistricts: path
+            };
+        }
+
+        // 查找直接距离
+        function findDirectDistance(district1, district2) {
+            var distances = {
+                '黄浦区-徐汇区': 8.5, '黄浦区-长宁区': 7.2, '黄浦区-静安区': 3.5, '黄浦区-普陀区': 9.1,
+                '黄浦区-虹口区': 4.2, '黄浦区-杨浦区': 8.7, '黄浦区-闵行区': 15.3, '黄浦区-宝山区': 16.8, '黄浦区-嘉定区': 22.5,
+                '黄浦区-浦东新区': 5.0, '黄浦区-金山区': 45.0, '黄浦区-松江区': 30.0, '黄浦区-青浦区': 25.0, '黄浦区-奉贤区': 40.0, '黄浦区-崇明区': 50.0,
+                '徐汇区-长宁区': 5.3, '徐汇区-静安区': 7.8, '徐汇区-普陀区': 11.2, '徐汇区-虹口区': 12.1,
+                '徐汇区-杨浦区': 15.6, '徐汇区-闵行区': 8.7, '徐汇区-宝山区': 20.3, '徐汇区-嘉定区': 25.8,
+                '徐汇区-浦东新区': 12.0, '徐汇区-金山区': 40.0, '徐汇区-松江区': 25.0, '徐汇区-青浦区': 30.0, '徐汇区-奉贤区': 35.0, '徐汇区-崇明区': 55.0,
+                '长宁区-静安区': 6.5, '长宁区-普陀区': 8.9, '长宁区-虹口区': 11.3, '长宁区-杨浦区': 14.8,
+                '长宁区-闵行区': 10.2, '长宁区-宝山区': 18.7, '长宁区-嘉定区': 23.4,
+                '长宁区-浦东新区': 15.0, '长宁区-金山区': 42.0, '长宁区-松江区': 28.0, '长宁区-青浦区': 25.0, '长宁区-奉贤区': 38.0, '长宁区-崇明区': 52.0,
+                '静安区-普陀区': 6.2, '静安区-虹口区': 7.8, '静安区-杨浦区': 11.3, '静安区-闵行区': 13.5,
+                '静安区-宝山区': 14.2, '静安区-嘉定区': 19.8,
+                '静安区-浦东新区': 8.0, '静安区-金山区': 43.0, '静安区-松江区': 32.0, '静安区-青浦区': 28.0, '静安区-奉贤区': 42.0, '静安区-崇明区': 48.0,
+                '普陀区-虹口区': 12.5, '普陀区-杨浦区': 16.1, '普陀区-闵行区': 15.8, '普陀区-宝山区': 11.3,
+                '普陀区-嘉定区': 16.7,
+                '普陀区-浦东新区': 18.0, '普陀区-金山区': 45.0, '普陀区-松江区': 35.0, '普陀区-青浦区': 20.0, '普陀区-奉贤区': 45.0, '普陀区-崇明区': 42.0,
+                '虹口区-杨浦区': 4.5, '虹口区-闵行区': 18.2, '虹口区-宝山区': 13.8, '虹口区-嘉定区': 24.3,
+                '虹口区-浦东新区': 10.0, '虹口区-金山区': 48.0, '虹口区-松江区': 38.0, '虹口区-青浦区': 32.0, '虹口区-奉贤区': 46.0, '虹口区-崇明区': 45.0,
+                '杨浦区-闵行区': 21.5, '杨浦区-宝山区': 9.7, '杨浦区-嘉定区': 26.8,
+                '杨浦区-浦东新区': 12.0, '杨浦区-金山区': 50.0, '杨浦区-松江区': 40.0, '杨浦区-青浦区': 35.0, '杨浦区-奉贤区': 48.0, '杨浦区-崇明区': 40.0,
+                '闵行区-宝山区': 24.3, '闵行区-嘉定区': 28.7,
+                '闵行区-浦东新区': 15.0, '闵行区-金山区': 35.0, '闵行区-松江区': 18.0, '闵行区-青浦区': 22.0, '闵行区-奉贤区': 25.0, '闵行区-崇明区': 60.0,
+                '宝山区-嘉定区': 18.2,
+                '宝山区-浦东新区': 25.0, '宝山区-金山区': 55.0, '宝山区-松江区': 42.0, '宝山区-青浦区': 30.0, '宝山区-奉贤区': 52.0, '宝山区-崇明区': 45.0,
+                '嘉定区-浦东新区': 30.0, '嘉定区-金山区': 60.0, '嘉定区-松江区': 40.0, '嘉定区-青浦区': 22.0, '嘉定区-奉贤区': 58.0,
+                '嘉定区-崇明区': 65.0,
+                '浦东新区-金山区': 40.0, '浦东新区-松江区': 30.0, '浦东新区-青浦区': 35.0, '浦东新区-奉贤区': 35.0, '浦东新区-崇明区': 50.0,
+                '金山区-松江区': 25.0, '金山区-青浦区': 45.0, '金山区-奉贤区': 20.0, '金山区-崇明区': 70.0,
+                '松江区-青浦区': 15.0, '松江区-奉贤区': 30.0, '松江区-崇明区': 75.0,
+                '青浦区-奉贤区': 40.0, '青浦区-崇明区': 70.0,
+                '奉贤区-崇明区': 65.0
+            };
+            
+            var key1 = district1 + '-' + district2;
+            var key2 = district2 + '-' + district1;
+            
+            if (distances[key1]) {
+                return distances[key1];
+            } else if (distances[key2]) {
+                return distances[key2];
+            } else {
+                return 30.0; // 默认距离
+            }
+        }
+
+        // 发货区域变化时显示路径
+        $('#sendDistrict').on('change', function() {
+            var sendDistrict = $(this).val();
+            var receiveDistrict = $('#receiveDistrict').val();
+            showShortestPath(sendDistrict, receiveDistrict);
+        });
+
+        // 收货区域变化时显示路径
+        $('#receiveDistrict').on('change', function() {
+            var sendDistrict = $('#sendDistrict').val();
+            var receiveDistrict = $(this).val();
+            showShortestPath(sendDistrict, receiveDistrict);
+        });
+
+        // 移除快递柜检查，直接提交
+        $('#submitBtn').on('click', function() {
+            var expressId = $('#expressId').val().trim();
+            var username = $('#username').val().trim();
+            var phone = $('#phone').val().trim();
+            var company = $('#company').val();
+            var sendDistrict = $('#sendDistrict').val();
+            var receiveDistrict = $('#receiveDistrict').val();
+
+            // 验证代码...
+            if (!expressId) {
+                alert('请输入快递单号');
+                return;
+            }
+            if (!username) {
+                alert('请输入收件人姓名');
+                return;
+            }
+            if (!phone) {
+                alert('请输入手机号码');
+                return;
+            }
+            if (!sendDistrict) {
+                alert('请选择发货区域');
+                return;
+            }
+            if (!receiveDistrict) {
+                alert('请选择收货区域');
+                return;
+            }
+
+            var phoneRegex = /^1[3-9]\d{9}$/;
+            if (!phoneRegex.test(phone)) {
+                alert('请输入正确的手机号码');
+                return;
+            }
+
+            var $btn = $(this);
+            $btn.prop('disabled', true).text('提交中...');
+
+            // 计算最短路径和距离
+            var result = calculateShortestPath(sendDistrict, receiveDistrict);
+            var routePath = result.path;
+            var distance = result.distance;
+
+            // 使用表单格式发送数据（不是JSON）
+            $.ajax({
+                url: 'express/insert.do',
+                type: 'POST',
+                data: {
+                    number: expressId,
+                    username: username,
+                    userPhone: phone,
+                    company: company,
+                    sysPhone: '18888888888',
+                    send_district: sendDistrict,
+                    receive_district: receiveDistrict,
+                    route_path: routePath,
+                    total_distance: distance
+                },
+                dataType: 'json',
+                success: function(response) {
+                    console.log('服务器响应:', response);
+
+                    if (response.status === 0) {
+                        alert('快递信息录入成功！\n最短路径：' + routePath + '\n总距离：' + distance + '公里');
+                        $('#expressId').val('');
+                        $('#username').val('');
+                        $('#phone').val('');
+                        $('#sendDistrict').val('');
+                        $('#receiveDistrict').val('');
+                        $('.path-info').remove();
+                    } else {
+                        alert('录入失败: ' + response.result);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('请求错误:', error);
+                    alert('网络错误，请检查网络连接后重试');
+                },
+                complete: function() {
+                    $btn.prop('disabled', false).text('录入信息');
+                }
+            });
+        });
+    });
+</script>
+
+</body>
+</html>

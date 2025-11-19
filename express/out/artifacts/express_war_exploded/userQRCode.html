@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>我的取货二维码</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no" />
+    <link href="css/normalize.css" type="text/css" rel="stylesheet" />
+    <link href="css/main.css" type="text/css" rel="stylesheet" />
+    <style>
+        body {
+            background-color: #f4f4f4;
+        }
+        .qr-container {
+            width: 90%;
+            max-width: 400px;
+            margin: 40px auto;
+            padding: 30px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            text-align: center;
+        }
+        #qrcode {
+            width: 256px;
+            height: 256px;
+            margin: 0 auto 20px auto;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #phone-display {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-top: 15px;
+            word-wrap: break-word;
+        }
+        .qr-title {
+            font-size: 20px;
+            color: #0078d7;
+            margin-bottom: 25px;
+        }
+        .loading-text {
+            color: #999;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+<div class="content">
+    <div class="top autoH">
+        <div class="logo autoH">
+            <img src="images/logo.png" width="100%">
+        </div>
+    </div>
+
+    <div class="qr-container">
+        <h2 class="qr-title">我的取货二维码</h2>
+        <div id="qrcode">
+            <p class="loading-text">正在加载二维码...</p>
+        </div>
+        <p id="phone-display">正在获取用户信息...</p>
+    </div>
+</div>
+
+<script src="js/jquery.min.js" type="text/javascript"></script>
+<script src="js/qrcode.min.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+    $(function() {
+        $.ajax({
+            // 修正：这里是正确的URL
+            url: "/user/checkLogin.do",
+            type: "GET",
+            dataType: "json",
+            success: function(res) {
+                console.log("用户信息:", res);
+
+                // 检查成功，并且data中有userPhone
+                // (res.data.userPhone 路径是正确的，因为后端返回了整个User对象)
+                if (res && res.status === 0 && res.data && res.data.userPhone) {
+                    var userPhone = res.data.userPhone;
+
+                    $("#phone-display").text("手机号: " + userPhone);
+                    $("#qrcode").empty();
+
+                    new QRCode(document.getElementById("qrcode"), {
+                        text: userPhone,
+                        width: 256,
+                        height: 256,
+                        colorDark : "#000000",
+                        colorLight : "#ffffff",
+                        correctLevel : QRCode.CorrectLevel.H
+                    });
+
+                } else {
+                    // 如果 status != 0 (例如-1), 会显示后端的提示，比如 "用户未登录"
+                    var errorMsg = res && res.result ? res.result : "获取用户信息失败";
+                    $("#phone-display").text(errorMsg).css("color", "red");
+                    $("#qrcode").text("无法生成二维码").addClass("loading-text");
+                }
+            },
+            error: function(xhr, status, error) {
+                // 如果AJAX请求本身失败(比如后端500错误)，会显示这个
+                console.error("AJAX错误:", status, error);
+                $("#phone-display").text("查询失败，请稍后再试").css("color", "red");
+                $("#qrcode").text("无法生成二维码").addClass("loading-text");
+            }
+        });
+    });
+</script>
+</body>
+</html>
