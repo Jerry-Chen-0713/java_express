@@ -10,9 +10,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
 
-/**
- * @author yemage
- */
 public class AdminDaoImple implements BaseAdminDao {
     private static final String SQL_UPDATE_LOGIN_TIME = " UPDATE ADMIN SET LOGINTIME=?,LOGINIP=? WHERE USERNAME=?";
     private static final String SQL_LOGIN = "SELECT ID FROM ADMIN WHERE USERNAME=? AND PASSWORD=?";

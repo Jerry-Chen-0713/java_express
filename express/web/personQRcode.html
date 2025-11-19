@@ -203,7 +203,7 @@
         };
 
         $(document).ready(function() {
-            $.getJSON("/wx/createQRCode.do",function(data) {
+            $.getJSON("/wx/getQRCodeData.do",function(data) {
                 if(data.status == -1){
                     layer.msg("二维码内容有误");
                 } else {
@@ -214,7 +214,7 @@
 
 
         $(".refresh").click(function(){
-            $.getJSON("/wx/createQRCode.do", function(data) {
+            $.getJSON("/wx/getQRCodeData.do", function(data) {
                 if(data.status == 0){
                     $("#qrcode").find("canvas, img").remove();
                     setQRcode(data.result);

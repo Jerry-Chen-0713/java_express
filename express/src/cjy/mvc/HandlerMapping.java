@@ -1,9 +1,5 @@
 package cjy.mvc;
 
-/**
- * @author yemage
- */
-
 import cjy.mvc.annotation.ResponseBody;
 import cjy.mvc.annotation.ResponseView;
 

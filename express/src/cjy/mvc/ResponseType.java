@@ -1,7 +1,6 @@
 package cjy.mvc;
 
 /**
- * @author yemage
  * 响应类型枚举
  * 用于标识控制器方法的响应方式
  */

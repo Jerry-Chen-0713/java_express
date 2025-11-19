@@ -2,10 +2,6 @@ package cjy.mvc.annotation;
 
 import java.lang.annotation.*;
 
-/**
- * @author yemage
- */
-
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

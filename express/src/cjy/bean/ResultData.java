@@ -3,9 +3,6 @@ package cjy.bean;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yemage
- */
 public class ResultData<T> {
     //每次查询的数据集合
     private List<T> rows = new ArrayList<>();

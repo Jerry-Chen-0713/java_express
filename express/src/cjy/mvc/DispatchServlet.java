@@ -10,9 +10,6 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-/**
- * @author yemage
- */
 public class DispatchServlet extends HttpServlet {
 
     @Override

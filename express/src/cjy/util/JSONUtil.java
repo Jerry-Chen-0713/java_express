@@ -2,9 +2,6 @@ package cjy.util;
 
 import com.google.gson.Gson;
 
-/**
- * @author yemage
- */
 public class JSONUtil {
 
     private static Gson gson = new Gson();

@@ -10,9 +10,6 @@ import cjy.util.SMSUtil;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author yemage
- */
 public class ExpressService{
 
     private static BaseExpressDao dao = new ExpressDaoImple();

@@ -5,9 +5,6 @@ import cjy.dao.impl.AdminDaoImple;
 
 import java.util.Date;
 
-/**
- * @author yemage
- */
 public class AdminService {
 
     private static BaseAdminDao dao = new AdminDaoImple();

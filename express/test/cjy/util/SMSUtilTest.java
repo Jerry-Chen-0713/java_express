@@ -2,9 +2,6 @@ package cjy.util;
 
 import org.junit.Test;
 
-/**
- * @author yemage
- */
 public class SMSUtilTest {
 
     @Test

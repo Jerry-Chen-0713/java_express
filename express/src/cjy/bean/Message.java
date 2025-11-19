@@ -1,8 +1,5 @@
 package cjy.bean;
 
-/**
- * @author yemage
- */
 public class Message {
     //{result:"",data:{},status:0}
 

@@ -1,9 +1,5 @@
 package cjy.dao;
 
-/**
- * @author yemage
- */
-
 import java.util.Date;
 
 /**

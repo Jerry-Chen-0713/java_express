@@ -14,35 +14,36 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
-/**
- * @author yemage
- */
 public class QRCodeController {
 
-    @ResponseBody("/wx/createQRCode.do")
+    @ResponseView("/wx/createQRCode.do")
     public String createQrCode(HttpServletRequest request, HttpServletResponse response){
+
         String code = request.getParameter("code");
         String type = request.getParameter("type");
+        String userPhone = null;
         String qRCodeContent = null;
 
         if("express".equals(type)){
             qRCodeContent = "express_" + code;
         }else{
+            // ★★★★★ 这是您需要修改的地方 ★★★★★
             User wxUser = UserUtil.getLoginUser(request.getSession());
-            if (wxUser == null) {
-                Message message = new Message("用户未登录，无法生成二维码", -1);
-                return JSONUtil.toJSON(message);
+
+            if (wxUser != null) {
+                userPhone = wxUser.getUserPhone();
+                qRCodeContent = "userPhone_" + userPhone ;
+            } else {
+                // 如果用户未登录，返回到登录页面
+                return "/login.html";
             }
-            String userPhone = wxUser.getUserPhone();
-            qRCodeContent = "userPhone_" + userPhone;
         }
-
         HttpSession session = request.getSession();
-        session.setAttribute("qrcode", qRCodeContent);
+        session.setAttribute("qrcode",qRCodeContent);
+        return "/personQRcode.html";
 
-        Message message = new Message(qRCodeContent, 0);
-        return JSONUtil.toJSON(message);
     }
+
 
     @ResponseBody("/wx/getQRCodeData.do")
     public String getQRCodeData(HttpServletRequest request, HttpServletResponse response) {

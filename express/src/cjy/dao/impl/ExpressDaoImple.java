@@ -11,9 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author 
- */
 public class ExpressDaoImple implements BaseExpressDao {
 
     //用于查询数据库中的全部快递（总数+新增），待取件快递（总数+新增）

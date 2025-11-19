@@ -1,8 +1,5 @@
 package cjy.exception;
 
-/**
- * @author yemage
- */
 public class DuplicateCodeException extends Exception{
 
     /**
